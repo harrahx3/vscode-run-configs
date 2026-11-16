@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.1 — 2026-11-16
+
+- The changelog of 1.0.0 now lists every change of that release; the first 1.0.0 package
+  left several out. No change to the extension itself.
+
 ## 1.0.0 — 2026-11-16
 
 - Published on GitHub and the Visual Studio Marketplace under the MIT license, as

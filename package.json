@@ -2,7 +2,7 @@
   "name": "vscode-run-configs",
   "displayName": "Run Configurations Panel",
   "description": "Create, edit and start the run and debug configurations of Python and web projects from a form and a side panel, without editing launch.json by hand.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "harrahx3",
   "author": {
     "name": "harrahx3"
