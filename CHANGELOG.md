@@ -5,6 +5,8 @@
 - Published on GitHub and the Visual Studio Marketplace under the MIT license, as
   _Run Configurations Panel_. The extension ID is now `harrahx3.vscode-run-configs`:
   uninstall a build installed earlier from a `.vsix` with another ID, or both run side by side.
+- The command palette category, the activity-bar icon and the settings section are now called
+  _Run Configurations_. Settings (`runConfigs.*`) and command IDs are unchanged.
 
 ## 0.2.0
 

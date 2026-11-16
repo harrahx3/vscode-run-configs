@@ -35,7 +35,7 @@ side panel and a form, instead of editing `.vscode/launch.json` by hand.
   are offered while typing a variable name, their default shown in the value box. A row left
   without a value is not written (an empty variable would replace the project's default).
 - **The status bar** shows the last configuration started: one click starts it again.
-  **Run Configs: Run or Debug…** (command palette) picks any configuration.
+  **Run Configurations: Run or Debug…** (command palette) picks any configuration.
 
 Everything is stored in the standard `.vscode/launch.json`, so F5, the Run and Debug view and
 colleagues without the extension keep working. Edits go through the file's text: comments,

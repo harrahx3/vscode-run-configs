@@ -42,7 +42,7 @@
       "activitybar": [
         {
           "id": "runConfigs",
-          "title": "Run Configs",
+          "title": "Run Configurations",
           "icon": "media/icon.svg"
         }
       ]
@@ -71,76 +71,76 @@
       {
         "command": "runConfigs.add",
         "title": "Add Configuration…",
-        "category": "Run Configs",
+        "category": "Run Configurations",
         "icon": "$(add)"
       },
       {
         "command": "runConfigs.refresh",
         "title": "Refresh",
-        "category": "Run Configs",
+        "category": "Run Configurations",
         "icon": "$(refresh)"
       },
       {
         "command": "runConfigs.openLaunchJson",
         "title": "Open launch.json",
-        "category": "Run Configs",
+        "category": "Run Configurations",
         "icon": "$(json)"
       },
       {
         "command": "runConfigs.pick",
         "title": "Run or Debug…",
-        "category": "Run Configs",
+        "category": "Run Configurations",
         "icon": "$(play-circle)"
       },
       {
         "command": "runConfigs.runLast",
         "title": "Run Last Configuration Again",
-        "category": "Run Configs"
+        "category": "Run Configurations"
       },
       {
         "command": "runConfigs.debug",
         "title": "Debug",
-        "category": "Run Configs",
+        "category": "Run Configurations",
         "icon": "$(debug-alt)"
       },
       {
         "command": "runConfigs.run",
         "title": "Run Without Debugging",
-        "category": "Run Configs",
+        "category": "Run Configurations",
         "icon": "$(play)"
       },
       {
         "command": "runConfigs.stop",
         "title": "Stop",
-        "category": "Run Configs",
+        "category": "Run Configurations",
         "icon": "$(debug-stop)"
       },
       {
         "command": "runConfigs.restart",
         "title": "Restart",
-        "category": "Run Configs",
+        "category": "Run Configurations",
         "icon": "$(debug-restart)"
       },
       {
         "command": "runConfigs.edit",
         "title": "Edit…",
-        "category": "Run Configs",
+        "category": "Run Configurations",
         "icon": "$(edit)"
       },
       {
         "command": "runConfigs.duplicate",
         "title": "Duplicate",
-        "category": "Run Configs"
+        "category": "Run Configurations"
       },
       {
         "command": "runConfigs.delete",
         "title": "Delete",
-        "category": "Run Configs"
+        "category": "Run Configurations"
       },
       {
         "command": "runConfigs.reveal",
         "title": "Show in launch.json",
-        "category": "Run Configs"
+        "category": "Run Configurations"
       }
     ],
     "menus": {
@@ -259,7 +259,7 @@
       ]
     },
     "configuration": {
-      "title": "Run Configs",
+      "title": "Run Configurations",
       "properties": {
         "runConfigs.defaultAction": {
           "type": "string",

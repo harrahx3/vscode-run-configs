@@ -242,8 +242,8 @@ export function createStatusBar(runner: Runner): vscode.Disposable {
       ? `$(${last.noDebug ? "play" : "debug-alt"}) ${last.name}`
       : "$(play-circle) Run…";
     item.tooltip = last
-      ? `${last.noDebug ? "Run" : "Debug"} "${last.name}" again (Run Configs)`
-      : "Run or debug a configuration (Run Configs)";
+      ? `${last.noDebug ? "Run" : "Debug"} "${last.name}" again (Run Configurations)`
+      : "Run or debug a configuration (Run Configurations)";
     item.command = last ? "runConfigs.runLast" : "runConfigs.pick";
     item.show();
   };
