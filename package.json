@@ -1,0 +1,316 @@
+{
+  "name": "vscode-run-configs",
+  "displayName": "Run Configurations Panel",
+  "description": "Create, edit and start the run and debug configurations of Python and web projects from a form and a side panel, without editing launch.json by hand.",
+  "version": "0.2.0",
+  "publisher": "harrahx3",
+  "author": {
+    "name": "harrahx3"
+  },
+  "license": "MIT",
+  "icon": "assets/marketplace-icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/harrahx3/vscode-run-configs.git"
+  },
+  "bugs": {
+    "url": "https://github.com/harrahx3/vscode-run-configs/issues"
+  },
+  "homepage": "https://github.com/harrahx3/vscode-run-configs#readme",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Debuggers",
+    "Other"
+  ],
+  "keywords": [
+    "launch.json",
+    "run",
+    "debug",
+    "python",
+    "fastapi",
+    "vite",
+    "fire"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "runConfigs",
+          "title": "Run Configs",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "runConfigs": [
+        {
+          "id": "runConfigs.list",
+          "name": "Configurations"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "runConfigs.list",
+        "contents": "No run configuration yet.\n[$(add) Add configuration](command:runConfigs.add)\nSuggestions come from your project: FastAPI apps, Python scripts, tests, package.json scripts.",
+        "when": "workspaceFolderCount > 0"
+      },
+      {
+        "view": "runConfigs.list",
+        "contents": "Open a folder to configure how it runs.\n[Open Folder](command:workbench.action.files.openFolder)",
+        "when": "workspaceFolderCount == 0"
+      }
+    ],
+    "commands": [
+      {
+        "command": "runConfigs.add",
+        "title": "Add Configuration…",
+        "category": "Run Configs",
+        "icon": "$(add)"
+      },
+      {
+        "command": "runConfigs.refresh",
+        "title": "Refresh",
+        "category": "Run Configs",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "runConfigs.openLaunchJson",
+        "title": "Open launch.json",
+        "category": "Run Configs",
+        "icon": "$(json)"
+      },
+      {
+        "command": "runConfigs.pick",
+        "title": "Run or Debug…",
+        "category": "Run Configs",
+        "icon": "$(play-circle)"
+      },
+      {
+        "command": "runConfigs.runLast",
+        "title": "Run Last Configuration Again",
+        "category": "Run Configs"
+      },
+      {
+        "command": "runConfigs.debug",
+        "title": "Debug",
+        "category": "Run Configs",
+        "icon": "$(debug-alt)"
+      },
+      {
+        "command": "runConfigs.run",
+        "title": "Run Without Debugging",
+        "category": "Run Configs",
+        "icon": "$(play)"
+      },
+      {
+        "command": "runConfigs.stop",
+        "title": "Stop",
+        "category": "Run Configs",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "runConfigs.restart",
+        "title": "Restart",
+        "category": "Run Configs",
+        "icon": "$(debug-restart)"
+      },
+      {
+        "command": "runConfigs.edit",
+        "title": "Edit…",
+        "category": "Run Configs",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "runConfigs.duplicate",
+        "title": "Duplicate",
+        "category": "Run Configs"
+      },
+      {
+        "command": "runConfigs.delete",
+        "title": "Delete",
+        "category": "Run Configs"
+      },
+      {
+        "command": "runConfigs.reveal",
+        "title": "Show in launch.json",
+        "category": "Run Configs"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "runConfigs.add",
+          "when": "view == runConfigs.list",
+          "group": "navigation@1"
+        },
+        {
+          "command": "runConfigs.openLaunchJson",
+          "when": "view == runConfigs.list",
+          "group": "navigation@2"
+        },
+        {
+          "command": "runConfigs.refresh",
+          "when": "view == runConfigs.list",
+          "group": "navigation@3"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "runConfigs.debug",
+          "when": "view == runConfigs.list && viewItem == config.idle",
+          "group": "inline@1"
+        },
+        {
+          "command": "runConfigs.run",
+          "when": "view == runConfigs.list && viewItem == config.idle",
+          "group": "inline@2"
+        },
+        {
+          "command": "runConfigs.restart",
+          "when": "view == runConfigs.list && viewItem == config.running",
+          "group": "inline@1"
+        },
+        {
+          "command": "runConfigs.stop",
+          "when": "view == runConfigs.list && viewItem == config.running",
+          "group": "inline@2"
+        },
+        {
+          "command": "runConfigs.edit",
+          "when": "view == runConfigs.list && viewItem =~ /^config/",
+          "group": "inline@3"
+        },
+        {
+          "command": "runConfigs.add",
+          "when": "view == runConfigs.list && viewItem == folder",
+          "group": "inline@1"
+        },
+        {
+          "command": "runConfigs.debug",
+          "when": "view == runConfigs.list && viewItem =~ /^config/",
+          "group": "1_run@1"
+        },
+        {
+          "command": "runConfigs.run",
+          "when": "view == runConfigs.list && viewItem =~ /^config/",
+          "group": "1_run@2"
+        },
+        {
+          "command": "runConfigs.edit",
+          "when": "view == runConfigs.list && viewItem =~ /^config/",
+          "group": "2_edit@1"
+        },
+        {
+          "command": "runConfigs.duplicate",
+          "when": "view == runConfigs.list && viewItem =~ /^config/",
+          "group": "2_edit@2"
+        },
+        {
+          "command": "runConfigs.reveal",
+          "when": "view == runConfigs.list && viewItem =~ /^config/",
+          "group": "2_edit@3"
+        },
+        {
+          "command": "runConfigs.delete",
+          "when": "view == runConfigs.list && viewItem =~ /^config/",
+          "group": "3_delete@1"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "runConfigs.debug",
+          "when": "false"
+        },
+        {
+          "command": "runConfigs.run",
+          "when": "false"
+        },
+        {
+          "command": "runConfigs.stop",
+          "when": "false"
+        },
+        {
+          "command": "runConfigs.restart",
+          "when": "false"
+        },
+        {
+          "command": "runConfigs.edit",
+          "when": "false"
+        },
+        {
+          "command": "runConfigs.duplicate",
+          "when": "false"
+        },
+        {
+          "command": "runConfigs.delete",
+          "when": "false"
+        },
+        {
+          "command": "runConfigs.reveal",
+          "when": "false"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Run Configs",
+      "properties": {
+        "runConfigs.defaultAction": {
+          "type": "string",
+          "enum": [
+            "debug",
+            "run"
+          ],
+          "enumDescriptions": [
+            "Start with the debugger attached (breakpoints work).",
+            "Start without the debugger (faster start-up)."
+          ],
+          "default": "debug",
+          "description": "What Enter does in the 'Run or Debug…' picker and the status-bar button."
+        },
+        "runConfigs.showStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a status-bar button that starts the last configuration again."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "typecheck": "tsc -p . --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "test:browser": "npm run build && node test/browser/run.mjs",
+    "test:vscode": "npm run build && tsc -p test/vscode && node out/test/vscode/runTest.js",
+    "package": "npm run notices && npm run build -- --production && vsce package --no-dependencies",
+    "notices": "node scripts/notices.mjs"
+  },
+  "dependencies": {
+    "@vscode/codicons": "0.0.45",
+    "jsonc-parser": "3.3.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "22.20.5",
+    "@types/vscode": "1.90.0",
+    "@vscode/test-electron": "3.1.0",
+    "@vscode/vsce": "4.1.0",
+    "esbuild": "0.28.2",
+    "eslint": "10.14.0",
+    "globals": "17.14.0",
+    "playwright-core": "1.65.0",
+    "prettier": "3.9.10",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.72.1",
+    "vitest": "5.1.0"
+  }
+}

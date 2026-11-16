@@ -1,0 +1,368 @@
+@import "@vscode/codicons/dist/codicon.css";
+
+/* Everything follows the VS Code theme through its --vscode-* variables. */
+:root {
+  --gap: 14px;
+  --radius: 4px;
+  --border: var(--vscode-panel-border, var(--vscode-widget-border, rgba(128, 128, 128, 0.35)));
+  --muted: var(--vscode-descriptionForeground);
+  --accent: var(--vscode-focusBorder);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  color: var(--vscode-foreground);
+  background: var(--vscode-editor-background);
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size, 13px);
+  line-height: 1.45;
+}
+
+#app {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 20px 24px 96px;
+}
+
+header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+  margin-bottom: 8px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.45em;
+  font-weight: 600;
+}
+
+h2 {
+  margin: 0 0 8px;
+  font-size: 0.85em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.folder,
+.muted,
+.help {
+  color: var(--muted);
+}
+
+section {
+  margin: 18px 0;
+}
+
+/* Kind picker: a grid of cards acting as radio buttons. */
+.kinds {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.kind {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 8px;
+  align-items: center;
+  padding: 8px 10px;
+  text-align: left;
+  color: var(--vscode-foreground);
+  background: var(--vscode-sideBar-background, transparent);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.kind .codicon {
+  grid-row: span 2;
+  font-size: 18px;
+}
+
+.kind-label {
+  font-weight: 600;
+}
+
+.kind-hint {
+  font-size: 0.85em;
+  color: var(--muted);
+}
+
+.kind:hover {
+  background: var(--vscode-list-hoverBackground);
+}
+
+.kind[aria-checked="true"] {
+  border-color: var(--accent);
+  background: var(--vscode-list-activeSelectionBackground, var(--vscode-list-hoverBackground));
+  color: var(--vscode-list-activeSelectionForeground, var(--vscode-foreground));
+}
+
+.kind[aria-checked="true"] .kind-hint {
+  color: inherit;
+  opacity: 0.85;
+}
+
+/* Fields. */
+.field {
+  margin: 0 0 var(--gap);
+}
+
+.field > label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.row.two {
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.row.two > .field {
+  flex: 1;
+}
+
+input[type="text"],
+select,
+textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 4px 6px;
+  color: var(--vscode-input-foreground);
+  background: var(--vscode-input-background);
+  border: 1px solid var(--vscode-input-border, var(--border));
+  border-radius: 2px;
+  font: inherit;
+}
+
+select {
+  color: var(--vscode-dropdown-foreground, var(--vscode-input-foreground));
+  background: var(--vscode-dropdown-background, var(--vscode-input-background));
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus-visible,
+summary:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+}
+
+[aria-invalid],
+[aria-invalid]:focus {
+  border-color: var(--vscode-inputValidation-errorBorder, #be1100);
+  outline: 1px solid var(--vscode-inputValidation-errorBorder, #be1100);
+  outline-offset: -1px;
+}
+
+.mono,
+pre {
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: var(--vscode-editor-font-size, 13px);
+}
+
+textarea {
+  resize: vertical;
+}
+
+.help {
+  margin-top: 3px;
+  font-size: 0.9em;
+}
+
+.error {
+  margin-top: 3px;
+  color: var(--vscode-errorForeground, #f14c4c);
+}
+
+.error:empty {
+  display: none;
+}
+
+.check {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.check > .help {
+  flex-basis: 100%;
+  margin-left: 22px;
+  margin-top: 0;
+}
+
+.check > label {
+  font-weight: normal;
+  margin: 0;
+}
+
+.members {
+  display: grid;
+  gap: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.env-rows {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.env-row input:first-child {
+  flex: 0 0 35%;
+}
+
+.eq {
+  color: var(--muted);
+}
+
+/* Buttons follow the theme's primary / secondary buttons. */
+button {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 12px;
+  color: var(--vscode-button-foreground);
+  background: var(--vscode-button-background);
+  border: 1px solid var(--vscode-button-border, transparent);
+  border-radius: 2px;
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+button:hover {
+  background: var(--vscode-button-hoverBackground);
+}
+
+button.secondary {
+  color: var(--vscode-button-secondaryForeground);
+  background: var(--vscode-button-secondaryBackground);
+}
+
+button.secondary:hover {
+  background: var(--vscode-button-secondaryHoverBackground);
+}
+
+button.icon-button,
+button.link {
+  padding: 2px 4px;
+  color: var(--vscode-foreground);
+  background: transparent;
+}
+
+button.link {
+  margin-top: 6px;
+  color: var(--vscode-textLink-foreground);
+}
+
+button.icon-button:hover,
+button.link:hover {
+  background: var(--vscode-toolbar-hoverBackground, rgba(128, 128, 128, 0.2));
+}
+
+details {
+  margin: 18px 0;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+details[open] > summary {
+  margin-bottom: 10px;
+}
+
+pre {
+  margin: 0;
+  padding: 8px;
+  overflow-x: auto;
+  background: var(--vscode-textCodeBlock-background, rgba(128, 128, 128, 0.1));
+  border-radius: var(--radius);
+}
+
+/* The save bar stays visible at the bottom. */
+footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  background: var(--vscode-editor-background);
+  border-top: 1px solid var(--border);
+}
+
+#status {
+  flex: 1;
+  min-width: 120px;
+}
+
+#status.ok {
+  color: var(--vscode-testing-iconPassed, #73c991);
+}
+
+#status.error {
+  color: var(--vscode-errorForeground, #f14c4c);
+}
+
+::placeholder {
+  color: var(--vscode-input-placeholderForeground, var(--muted));
+  opacity: 0.75;
+}
+
+/* Python Fire block: the command and its options, framed under the file field. */
+fieldset.fire {
+  margin: 0 0 var(--gap);
+  padding: 8px 12px 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+fieldset.fire legend {
+  padding: 0 4px;
+  color: var(--muted);
+}
+
+.fire-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  column-gap: 12px;
+}
+
+.fire-options > .check {
+  align-self: center;
+}
+
+label.mono {
+  font-weight: 600;
+}

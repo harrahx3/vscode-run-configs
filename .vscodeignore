@@ -1,0 +1,12 @@
+**
+!dist/extension.js
+!dist/webview.js
+!dist/webview.css
+!dist/codicon.ttf
+!media/icon.svg
+!package.json
+!README.md
+!CHANGELOG.md
+!LICENSE
+!ThirdPartyNotices.txt
+!assets/marketplace-icon.png

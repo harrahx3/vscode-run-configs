@@ -1,0 +1,36 @@
+# On a tag vX.Y.Z: test, build the .vsix, attach it to a GitHub Release and publish it to the
+# Visual Studio Marketplace with Trusted Publishing (no stored secret). The Marketplace publisher
+# must have a Trusted Publishing policy for this repository and this workflow file (publish.yml).
+name: Publish
+
+on:
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+"]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the GitHub Release
+      id-token: write # Marketplace Trusted Publishing
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Check that the tag matches package.json
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          test "v$VERSION" = "$GITHUB_REF_NAME" || { echo "Tag $GITHUB_REF_NAME does not match package.json version $VERSION"; exit 1; }
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run package
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: "*.vsix"
+          body: "See CHANGELOG.md."
+      - name: Publish to the Visual Studio Marketplace
+        run: npx vsce publish --oidc --packagePath ./*.vsix
