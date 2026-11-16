@@ -7,6 +7,8 @@
   uninstall a build installed earlier from a `.vsix` with another ID, or both run side by side.
 - The command palette category, the activity-bar icon and the settings section are now called
   _Run Configurations_. Settings (`runConfigs.*`) and command IDs are unchanged.
+- Python configurations always write `justMyCode` (debugpy takes a missing value as `true`), so
+  the choice is visible in `launch.json` and in the form's preview.
 
 ## 0.2.0
 
