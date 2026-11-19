@@ -130,3 +130,29 @@ describe("project detection", () => {
     expect(vitePort("const x = 'http://a'; export default { server: { port: 5000 } }")).toBe(5000);
   });
 });
+
+describe("environment variable suggestions", () => {
+  it("lists python reads, vite config reads and env template entries, never a real env file", () => {
+    const hints = hintsOf(
+      scan({
+        "backend/app/config.py": 'import os\nos.getenv("BEBOP_MCP_TIMEOUT", "300")\n',
+        "frontend/vite.config.ts":
+          "const backend = env.BACKEND_PORT || '8010'\nport: Number(env.FRONTEND_PORT || 8098)\n",
+        ".env.template":
+          'POSTGRES_PORT=5444\n# BEBOP_RESULTS_DIRS=["/x", "y"]\nFRONTEND_PORT=8098\n',
+        ".env": "SECRET_TOKEN=abc\n",
+      }),
+      [],
+    );
+    const byKey = Object.fromEntries(hints.envNames.map((e) => [e.name, e.default]));
+    expect(byKey).toMatchObject({
+      BEBOP_MCP_TIMEOUT: "300",
+      BACKEND_PORT: "8010",
+      FRONTEND_PORT: "8098",
+      POSTGRES_PORT: "5444",
+    });
+    expect(byKey).toHaveProperty("BEBOP_RESULTS_DIRS");
+    expect(byKey.BEBOP_RESULTS_DIRS).toBeUndefined();
+    expect(byKey).not.toHaveProperty("SECRET_TOKEN");
+  });
+});

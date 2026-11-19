@@ -8,6 +8,9 @@
 - Vite: the same **Port from environment variable** field, plus an **Environment file** field.
   The command reads that one variable out of the file (bash / zsh), after the environment and
   before the fallback port; the rest of the file is never sourced.
+- The variable-name suggestions now also come from the project's Vite config (`env.X`,
+  `process.env.X`) and from an env **template** (`.env.template`, `.env.example`…), with its
+  value as the default. A real env file is still never read.
 - New **Vite dev server** kind in "What do you want to run?": port, host, `--strictPort`,
   package manager and folder; the project scan suggests it when `vite` is a dependency.
 

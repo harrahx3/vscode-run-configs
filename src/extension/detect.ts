@@ -1,6 +1,7 @@
 // Scans a workspace folder (bounded: excluded build/venv folders, capped file count and size)
 // and hands the result to the pure detectCore.
 import * as vscode from "vscode";
+import { ENV_TEMPLATE } from "./envNames";
 import { hintsOf, suggest, type Hints, type Scan, type Suggestion } from "./detectCore";
 
 const EXCLUDE =
@@ -50,7 +51,7 @@ async function scanFolder(folder: vscode.WorkspaceFolder): Promise<Scan> {
     vscode.workspace.findFiles(pattern("**/*.py"), EXCLUDE, MAX_PY_FILES),
     vscode.workspace.findFiles(
       pattern(
-        "**/{pyproject.toml,package.json,pnpm-lock.yaml,yarn.lock,bun.lockb,bun.lock,package-lock.json,vite.config.*}",
+        "**/{pyproject.toml,package.json,pnpm-lock.yaml,yarn.lock,bun.lockb,bun.lock,package-lock.json,vite.config.*,.env.template,.env.example,.env.sample,.env_template,env.example}",
       ),
       EXCLUDE,
       500,
@@ -58,7 +59,8 @@ async function scanFolder(folder: vscode.WorkspaceFolder): Promise<Scan> {
   ]);
   const texts = new Map<string, string>();
   const known = new Set<string>();
-  const wanted = (p: string) => /(pyproject\.toml|package\.json|vite\.config\.\w+|\.py)$/.test(p);
+  const wanted = (p: string) =>
+    /(pyproject\.toml|package\.json|vite\.config\.\w+|\.py)$/.test(p) || ENV_TEMPLATE.test(p);
   const all = [...pyFiles, ...projectFiles];
   for (let i = 0; i < all.length; i += 64) {
     await Promise.all(

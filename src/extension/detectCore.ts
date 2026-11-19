@@ -3,6 +3,7 @@
 import type { Hints } from "../shared/messages";
 import type { FireCli } from "../shared/fire";
 import { envNamesOf, fireCliOf } from "./pythonCli";
+import { ENV_TEMPLATE, jsEnvNamesOf, mergeEnvNames, templateEnvNamesOf } from "./envNames";
 import { emptyModel, type FormModel, type PackageManager } from "../shared/model";
 
 export type { Hints };
@@ -363,6 +364,9 @@ export function suggest(scan: Scan): Suggestion[] {
   return [...together, ...python, ...web];
 }
 
+const textsOf = (scan: Scan, keep: (path: string) => boolean): string[] =>
+  [...scan.texts].filter(([p]) => keep(p)).map(([, text]) => text);
+
 export function hintsOf(scan: Scan, suggestions: Suggestion[]): Hints {
   const uniq = (xs: string[]) => [...new Set(xs.filter(Boolean))];
   const models = suggestions.map((s) => s.model);
@@ -377,8 +381,10 @@ export function hintsOf(scan: Scan, suggestions: Suggestion[]): Hints {
     urls: uniq(models.filter((m) => m.kind === "browser").map((m) => m.url)),
     pythons: uniq(models.map((m) => m.python)),
     fire: fireClis(scan),
-    envNames: envNamesOf(
-      [...scan.texts].filter(([p]) => p.endsWith(".py")).map(([, t]) => t),
+    envNames: mergeEnvNames(
+      envNamesOf(textsOf(scan, (p) => p.endsWith(".py"))),
+      jsEnvNamesOf(textsOf(scan, (p) => /(^|\/)vite\.config\.\w+$/.test(p))),
+      templateEnvNamesOf(textsOf(scan, (p) => ENV_TEMPLATE.test(p))),
     ).slice(0, 300),
   };
 }
