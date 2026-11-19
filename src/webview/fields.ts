@@ -31,6 +31,7 @@ type TextField =
   | "app"
   | "host"
   | "port"
+  | "portEnv"
   | "script"
   | "url"
   | "webRoot"
@@ -92,7 +93,7 @@ export function text(
 
 export function check(
   ctx: FieldContext,
-  field: "justMyCode" | "reload" | "stopAll",
+  field: "justMyCode" | "reload" | "stopAll" | "strictPort",
   label: string,
   help?: string,
 ): HTMLElement {
@@ -229,12 +230,21 @@ export function kindFields(ctx: FieldContext): {
           h(
             "div",
             { class: "row two" },
-            text(ctx, "port", "Port", { placeholder: "8000" }),
+            text(ctx, "port", "Port", {
+              placeholder: "8000",
+              help: "With a variable below: the port used when the variable is not set.",
+            }),
             text(ctx, "host", "Host", {
               placeholder: "127.0.0.1",
               help: "0.0.0.0 to reach it from other machines.",
             }),
           ),
+          text(ctx, "portEnv", "Port from environment variable (optional)", {
+            mono: true,
+            placeholder: "BACKEND_PORT",
+            suggestions: ctx.hints.envNames.map((e) => e.name).filter((n) => /PORT/i.test(n)),
+            help: "Name of the variable that holds the port, read from the environment or from the env file below.",
+          }),
           check(ctx, "reload", "Restart on code changes (--reload)"),
           text(ctx, "args", "More uvicorn options", {
             mono: true,
@@ -282,6 +292,40 @@ export function kindFields(ctx: FieldContext): {
             pick: "cwd",
             mono: true,
             help: "The folder holding package.json.",
+          }),
+          envTable(ctx),
+        ],
+        advanced: [task],
+      };
+    case "vite":
+      return {
+        main: [
+          h(
+            "div",
+            { class: "row two" },
+            text(ctx, "port", "Port", {
+              placeholder: "from vite.config",
+              help: "Empty = the port of vite.config (e.g. read from your env file there).",
+            }),
+            text(ctx, "host", "Host", {
+              placeholder: "localhost",
+              help: "0.0.0.0 to reach it from other machines.",
+            }),
+          ),
+          check(ctx, "strictPort", "Fail if the port is taken (--strictPort)"),
+          select(ctx, "packageManager", "Package manager", [
+            ["npm", "npm (npx)"],
+            ["pnpm", "pnpm (exec)"],
+            ["yarn", "yarn"],
+            ["bun", "bun (bunx)"],
+          ]),
+          text(ctx, "args", "More vite options", { mono: true, placeholder: "--mode staging" }),
+        ],
+        context: [
+          text(ctx, "cwd", "Run in folder", {
+            pick: "cwd",
+            mono: true,
+            help: "The folder holding vite.config and package.json.",
           }),
           envTable(ctx),
         ],

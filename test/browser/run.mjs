@@ -125,6 +125,8 @@ function emptyModel(kind) {
     app: "",
     host: "",
     port: "",
+    portEnv: "",
+    strictPort: false,
     reload: true,
     packageManager: "npm",
     script: "dev",

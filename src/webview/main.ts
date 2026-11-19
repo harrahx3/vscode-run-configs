@@ -59,6 +59,8 @@ export function autoName(m: FormModel): string {
       return m.args.trim() ? `Tests ${m.args.trim()}` : "Tests";
     case "npm-script":
       return m.script ? `${m.packageManager} ${m.script}` : "";
+    case "vite":
+      return m.port ? `Vite :${m.port}` : "Vite";
     case "browser":
       return m.url ? `Browser ${m.url.replace(/^https?:\/\//, "")}` : "";
     case "compound":

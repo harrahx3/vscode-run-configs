@@ -8,6 +8,7 @@ export type ConfigKind =
   | "fastapi"
   | "pytest"
   | "npm-script"
+  | "vite"
   | "browser"
   | "compound"
   | "custom";
@@ -40,8 +41,13 @@ export interface FormModel {
   /** FastAPI: `module.path:variable`. */
   app: string;
   host: string;
+  /** Port number; with `portEnv` set, the fallback used when the variable is not set. */
   port: string;
+  /** FastAPI: name of the environment variable that holds the port; empty = a literal port. */
+  portEnv: string;
   reload: boolean;
+  /** Vite: fail instead of moving to the next free port (--strictPort). */
+  strictPort: boolean;
   packageManager: PackageManager;
   script: string;
   url: string;
@@ -81,6 +87,12 @@ export const KINDS: KindInfo[] = [
     hint: "npm / pnpm run dev…",
     icon: "package",
   },
+  {
+    kind: "vite",
+    label: "Vite dev server",
+    hint: "vite, port and host",
+    icon: "zap",
+  },
   { kind: "browser", label: "Browser", hint: "Debug a web page", icon: "globe" },
   { kind: "compound", label: "Start together", hint: "Several at once", icon: "layers" },
   { kind: "custom", label: "Other (JSON)", hint: "Any debugger type", icon: "json" },
@@ -106,7 +118,9 @@ export function emptyModel(kind: ConfigKind = "python-file"): FormModel {
     app: "",
     host: "",
     port: "",
+    portEnv: "",
     reload: true,
+    strictPort: false,
     packageManager: "npm",
     script: "dev",
     url: "http://localhost:5173",
@@ -120,19 +134,43 @@ export function emptyModel(kind: ConfigKind = "python-file"): FormModel {
 }
 
 const str = (v: unknown, fallback = ""): string => (typeof v === "string" ? v : fallback);
+/** `npx vite …`, `pnpm exec vite …`, `yarn vite …`, `bunx vite …`. */
+const VITE_COMMAND = /^(npx|pnpm exec|yarn|bunx)\s+vite(?:\s+(.*))?$/;
+const VITE_RUNNER: Record<PackageManager, string> = {
+  npm: "npx",
+  pnpm: "pnpm exec",
+  yarn: "yarn",
+  bun: "bunx",
+};
 const NPM_COMMAND = /^(npm|pnpm|yarn|bun)\s+(?:run\s+)?(\S+)(?:\s+--)?(?:\s+(.*))?$/;
+
+/**
+ * FastAPI with the port read from an environment variable: uvicorn's command line only takes a
+ * literal `--port`, so the entry runs `uvicorn.run(...)` through debugpy's `code` property. The
+ * variable comes from the process environment or from the entry's `envFile`.
+ */
+const UVICORN_CODE =
+  /^import os, uvicorn; uvicorn\.run\("([^"]+)"(?:, host="([^"]*)")?, port=int\(os\.environ\.get\("([^"]+)", "(\d+)"\)\), reload=(True|False)\)$/;
+
+function uvicornCode(m: FormModel): string {
+  const host = m.host.trim() ? `, host="${m.host.trim()}"` : "";
+  const fallback = m.port.trim() || "8000";
+  const reload = m.reload ? "True" : "False";
+  return `import os, uvicorn; uvicorn.run("${m.app.trim()}"${host}, port=int(os.environ.get("${m.portEnv.trim()}", "${fallback}")), reload=${reload})`;
+}
 
 /** Guesses which form kind an existing entry belongs to. */
 export function kindOf(entry: LaunchEntry, section: Section = "configurations"): ConfigKind {
   if (section === "compounds") return "compound";
   const type = str(entry.type);
   if (PYTHON_TYPES.includes(type) && entry.request !== "attach") {
-    if (entry.module === "uvicorn") return "fastapi";
+    if (entry.module === "uvicorn" || UVICORN_CODE.test(str(entry.code))) return "fastapi";
     if (entry.module === "pytest") return "pytest";
     if (typeof entry.module === "string") return "python-module";
     if (typeof entry.program === "string") return "python-file";
     return "custom";
   }
+  if (type === "node-terminal" && VITE_COMMAND.test(str(entry.command).trim())) return "vite";
   if (type === "node-terminal" && NPM_COMMAND.test(str(entry.command).trim())) return "npm-script";
   if (BROWSER_TYPES.includes(type) && entry.request === "launch") return "browser";
   return "custom";
@@ -186,13 +224,36 @@ export function fromLaunch(entry: LaunchEntry, section: Section = "configuration
     m.justMyCode = entry.justMyCode !== false;
     m.console = (str(entry.console) || "integratedTerminal") as ConsoleKind;
     const args = typeof entry.args === "string" ? splitArgs(entry.args) : (entry.args ?? []);
-    if (kind === "fastapi") parseUvicornArgs((args as unknown[]).map(String), m);
+    const coded = kind === "fastapi" ? UVICORN_CODE.exec(str(entry.code)) : null;
+    if (coded) {
+      m.app = coded[1];
+      m.host = coded[2] ?? "";
+      m.portEnv = coded[3];
+      m.port = coded[4];
+      m.reload = coded[5] === "True";
+    } else if (kind === "fastapi") parseUvicornArgs((args as unknown[]).map(String), m);
     else m.args = argsToString(entry.args);
   } else if (kind === "npm-script") {
     const [, pm, script, rest] = NPM_COMMAND.exec(str(entry.command).trim())!;
     m.packageManager = pm as PackageManager;
     m.script = script;
     m.args = rest ?? "";
+  } else if (kind === "vite") {
+    const [, runner, rest] = VITE_COMMAND.exec(str(entry.command).trim())!;
+    m.packageManager = (Object.entries(VITE_RUNNER).find(([, r]) => r === runner)?.[0] ??
+      "npm") as PackageManager;
+    const args = splitArgs(rest ?? "");
+    const other: string[] = [];
+    for (let i = 0; i < args.length; i++) {
+      const a = args[i];
+      if (a === "--strictPort") m.strictPort = true;
+      else if (a === "--host" && i + 1 < args.length) m.host = args[++i];
+      else if (a === "--port" && i + 1 < args.length) m.port = args[++i];
+      else if (a.startsWith("--host=")) m.host = a.slice(7);
+      else if (a.startsWith("--port=")) m.port = a.slice(7);
+      else other.push(a);
+    }
+    m.args = joinArgs(other);
   } else if (kind === "browser") {
     m.url = str(entry.url);
     m.webRoot = str(entry.webRoot, "${workspaceFolder}");
@@ -203,13 +264,24 @@ export function fromLaunch(entry: LaunchEntry, section: Section = "configuration
 
 /** Keys the form owns for each kind; every other key of an existing entry is kept as is. */
 const COMMON = ["name", "type", "request", "cwd", "env", "preLaunchTask"];
-const PY = [...COMMON, "program", "module", "args", "python", "envFile", "justMyCode", "console"];
+const PY = [
+  ...COMMON,
+  "program",
+  "module",
+  "code",
+  "args",
+  "python",
+  "envFile",
+  "justMyCode",
+  "console",
+];
 const MANAGED: Record<ConfigKind, string[]> = {
   "python-file": PY,
   "python-module": PY,
   fastapi: PY,
   pytest: PY,
   "npm-script": [...COMMON, "command"],
+  vite: [...COMMON, "command"],
   browser: [...COMMON, "url", "webRoot"],
   compound: ["name", "configurations", "stopAll", "preLaunchTask"],
   custom: [],
@@ -231,6 +303,15 @@ function uvicornArgs(m: FormModel): string[] {
   if (m.port.trim()) args.push("--port", m.port.trim());
   if (m.reload) args.push("--reload");
   return [...args, ...splitArgs(m.args)];
+}
+
+export function viteCommand(m: FormModel): string {
+  const parts = [`${VITE_RUNNER[m.packageManager]} vite`];
+  if (m.host.trim()) parts.push("--host", m.host.trim());
+  if (m.port.trim()) parts.push("--port", m.port.trim());
+  if (m.strictPort) parts.push("--strictPort");
+  if (m.args.trim()) parts.push(m.args.trim());
+  return parts.join(" ");
 }
 
 export function npmCommand(m: FormModel): string {
@@ -300,7 +381,9 @@ export function toLaunch(
         : m.kind === "python-module"
           ? { module: m.module.trim(), args: splitArgs(m.args) }
           : m.kind === "fastapi"
-            ? { module: "uvicorn", args: uvicornArgs(m) }
+            ? m.portEnv.trim()
+              ? { code: uvicornCode(m) }
+              : { module: "uvicorn", args: uvicornArgs(m) }
             : { module: "pytest", args: splitArgs(m.args) };
     entry = {
       name,
@@ -316,12 +399,12 @@ export function toLaunch(
       justMyCode: m.justMyCode,
       preLaunchTask,
     };
-  } else if (m.kind === "npm-script") {
+  } else if (m.kind === "npm-script" || m.kind === "vite") {
     entry = {
       name,
       type: "node-terminal",
       request: "launch",
-      command: npmCommand(m),
+      command: m.kind === "vite" ? viteCommand(m) : npmCommand(m),
       cwd: m.cwd.trim(),
       env,
       preLaunchTask,
@@ -347,12 +430,16 @@ export function summary(m: FormModel): string {
       return [short(m.program), m.args].filter(Boolean).join(" ");
     case "python-module":
       return [`-m ${m.module}`, m.args].filter(Boolean).join(" ");
-    case "fastapi":
-      return `uvicorn ${m.app}${m.port ? ` :${m.port}` : ""}${m.reload ? " (reload)" : ""}`;
+    case "fastapi": {
+      const port = m.portEnv.trim() ? ` :$${m.portEnv.trim()}` : m.port ? ` :${m.port}` : "";
+      return `uvicorn ${m.app}${port}${m.reload ? " (reload)" : ""}`;
+    }
     case "pytest":
       return ["pytest", m.args].filter(Boolean).join(" ");
     case "npm-script":
       return npmCommand(m) + (short(m.cwd) ? ` in ${short(m.cwd)}` : "");
+    case "vite":
+      return viteCommand(m) + (short(m.cwd) ? ` in ${short(m.cwd)}` : "");
     case "browser":
       return m.url;
     case "compound":
@@ -384,7 +471,15 @@ export function validate(m: FormModel, names: readonly string[]): Record<string,
     if (m.app.trim() && !/^[\w.]+:[\w.()]+$/.test(m.app.trim()))
       errors.app = "Use module:variable, e.g. app.main:app.";
     if (m.port.trim() && !/^\d{2,5}$/.test(m.port.trim())) errors.port = "A port is a number.";
+    if (m.portEnv.trim()) {
+      if (!/^[A-Za-z_]\w*$/.test(m.portEnv.trim()))
+        errors.portEnv = "A variable name: letters, digits and underscores, e.g. BACKEND_PORT.";
+      if (m.args.trim())
+        errors.args = "Extra uvicorn options cannot be combined with a port variable.";
+    }
   }
+  if (m.kind === "vite" && m.port.trim() && !/^\d{2,5}$/.test(m.port.trim()))
+    errors.port = "A port is a number.";
   if (m.kind === "npm-script") need("script", "Choose the script to run.");
   if (m.kind === "browser") need("url", "Type the page address, e.g. http://localhost:5173.");
   if (m.kind === "compound" && !m.members.length)

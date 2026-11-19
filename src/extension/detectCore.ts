@@ -282,6 +282,8 @@ export function devServerUrl(
   return `http://localhost:${port}`;
 }
 
+const VITE_RUNNER_LABEL = { npm: "npx", pnpm: "pnpm exec", yarn: "yarn", bun: "bunx" };
+
 function webSuggestions(scan: Scan): Suggestion[] {
   const out: Suggestion[] = [];
   for (const file of pathsWith(scan, "package.json")) {
@@ -308,7 +310,20 @@ function webSuggestions(scan: Scan): Suggestion[] {
         model: m,
       });
     }
-    const url = devServerUrl(scan, dir, { ...pkg.dependencies, ...pkg.devDependencies });
+    const deps = { ...pkg.dependencies, ...pkg.devDependencies };
+    if ("vite" in deps) {
+      const m = emptyModel("vite");
+      m.packageManager = pm;
+      m.cwd = wsPath(dir);
+      m.name = `Vite${suffix(dir)}`;
+      out.push({
+        group: "Web",
+        label: `${VITE_RUNNER_LABEL[pm]} vite${suffix(dir)}`,
+        detail: "Vite dev server with its port and host",
+        model: m,
+      });
+    }
+    const url = devServerUrl(scan, dir, deps);
     if (url) {
       const m = emptyModel("browser");
       m.url = url;

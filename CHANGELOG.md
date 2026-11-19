@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- FastAPI: a **Port from environment variable** field. Type the variable's name (e.g.
+  `BACKEND_PORT`); the entry then starts uvicorn through debugpy's `code` property and reads
+  the port from the environment or from the entry's env file, with the Port field as fallback.
+- New **Vite dev server** kind in "What do you want to run?": port, host, `--strictPort`,
+  package manager and folder; the project scan suggests it when `vite` is a dependency.
+
 ## 1.0.1 — 2026-11-16
 
 - The changelog of 1.0.0 now lists every change of that release; the first 1.0.0 package

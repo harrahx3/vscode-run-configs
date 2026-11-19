@@ -19,6 +19,7 @@ side panel and a form, instead of editing `.vscode/launch.json` by hand.
     `Run main.py`, which would only print Fire's help.
   - Web: every `package.json` script with the right package manager (from the lock file), and
     a browser debug configuration on the dev server's address (Vite's `server.port` is read).
+  - **Vite dev server** (`npx vite`, `pnpm exec vite`…) with port, host and `--strictPort`.
   - **Backend + frontend**: a FastAPI app and a `dev` script started (and stopped) together.
   - Or a blank form of any kind.
 - **The form** covers Python script, Python module, FastAPI, pytest, `package.json` script,
@@ -31,6 +32,8 @@ side panel and a form, instead of editing `.vscode/launch.json` by hand.
   and the description from the docstring (Google or NumPy style). The arguments line is
   rebuilt from them, and edited arguments are read back, in any Fire spelling
   (`--days 3`, `--days=3`, `--stop-after`, `--noflag`).
+- **FastAPI port from a variable**: name an environment variable (e.g. `BACKEND_PORT`) and the
+  entry reads the port from it (process environment or env file), with the Port field as fallback.
 - **Environment variables the project reads** (`os.getenv("X", "default")`, `os.environ[...]`)
   are offered while typing a variable name, their default shown in the value box. A row left
   without a value is not written (an empty variable would replace the project's default).

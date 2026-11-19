@@ -222,3 +222,78 @@ describe("validation", () => {
     expect(validate(m, []).json).toMatch(/request/);
   });
 });
+
+describe("FastAPI port from an environment variable", () => {
+  const entry = {
+    name: "API",
+    type: "debugpy",
+    request: "launch",
+    code: 'import os, uvicorn; uvicorn.run("app.main:app", port=int(os.environ.get("BACKEND_PORT", "8010")), reload=True)',
+    cwd: "${workspaceFolder}/backend",
+    envFile: "${workspaceFolder}/.env",
+    justMyCode: true,
+    console: "integratedTerminal",
+  };
+
+  it("reads the variable name and the fallback port back", () => {
+    const m = fromLaunch(entry);
+    expect(m.kind).toBe("fastapi");
+    expect([m.app, m.portEnv, m.port, m.reload]).toEqual([
+      "app.main:app",
+      "BACKEND_PORT",
+      "8010",
+      true,
+    ]);
+    expect(summary(m)).toBe("uvicorn app.main:app :$BACKEND_PORT (reload)");
+  });
+
+  it("round-trips through the form", () => {
+    expect(toLaunch(fromLaunch(entry), entry).entry).toEqual(entry);
+  });
+
+  it("writes a literal --port again once the variable is cleared", () => {
+    const m = fromLaunch(entry);
+    m.portEnv = "";
+    const { entry: out } = toLaunch(m, entry);
+    expect(out.code).toBeUndefined();
+    expect(out.module).toBe("uvicorn");
+    expect(out.args).toEqual(["app.main:app", "--port", "8010", "--reload"]);
+  });
+
+  it("rejects a bad variable name and extra options", () => {
+    const m = fromLaunch(entry);
+    m.portEnv = "1 BAD";
+    m.args = "--log-level debug";
+    expect(Object.keys(validate(m, []))).toEqual(expect.arrayContaining(["portEnv", "args"]));
+  });
+});
+
+describe("Vite kind", () => {
+  it("builds and reads back the command", () => {
+    const m = emptyModel("vite");
+    m.name = "Vite";
+    m.cwd = "${workspaceFolder}/frontend";
+    m.port = "5183";
+    m.strictPort = true;
+    m.args = "--mode staging";
+    const { entry } = toLaunch(m);
+    expect(entry.command).toBe("npx vite --port 5183 --strictPort --mode staging");
+    const back = fromLaunch(entry);
+    expect(back.kind).toBe("vite");
+    expect([back.port, back.strictPort, back.args]).toEqual(["5183", true, "--mode staging"]);
+  });
+
+  it("keeps npm scripts as npm scripts", () => {
+    expect(kindOf({ type: "node-terminal", command: "npm run dev" })).toBe("npm-script");
+    expect(kindOf({ type: "node-terminal", command: "pnpm exec vite --host 0.0.0.0" })).toBe(
+      "vite",
+    );
+  });
+
+  it("a bare vite command needs no port", () => {
+    const m = emptyModel("vite");
+    m.name = "Vite";
+    expect(validate(m, [])).toEqual({});
+    expect(toLaunch(m).entry.command).toBe("npx vite");
+  });
+});
