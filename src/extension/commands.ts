@@ -103,53 +103,50 @@ export function registerCommands(
     const taken = (await readFolder(folder)).items.map((i) => i.name);
     const qp = vscode.window.createQuickPick<AddItem>();
     qp.title = `Add a run configuration${(vscode.workspace.workspaceFolders?.length ?? 0) > 1 ? ` to ${folder.name}` : ""}`;
-    qp.placeholder = "Pick a suggestion from your project, or start from a blank form";
+    qp.placeholder = "Pick a detected configuration, or just press Enter for a blank form";
     qp.matchOnDescription = true;
     qp.matchOnDetail = true;
-    const blanks: AddItem[] = [
-      { label: "Start from a blank form", kind: vscode.QuickPickItemKind.Separator },
-      ...KINDS.map((k) => ({
-        label: `$(${k.icon}) ${k.label}`,
-        description: k.hint,
-        blank: k.kind,
-      })),
-    ];
-    // No item is highlighted when the list opens (and each time the scan refreshes it), so Enter
-    // without a choice opens a blank form with nothing selected, and what is highlighted is
-    // always what Enter picks. Typing a filter or pressing Down highlights an item as usual.
+    const blank: AddItem = { label: "", blank: "unset" };
+    // No item is highlighted when the list opens (and each time the scan refreshes it), so what
+    // is highlighted is always what Enter picks; Enter without a highlight is the blank form.
     const setItems = (items: AddItem[]) => {
       qp.items = items;
       qp.activeItems = [];
     };
-    setItems(blanks);
     qp.busy = true;
     qp.show();
-    detect(folder, true)
-      .then(({ suggestions }) => {
-        const fresh = suggestions.filter((s) => !taken.includes(s.model.name));
-        const items: AddItem[] = [];
-        let group = "";
-        for (const s of fresh) {
-          if (s.group !== group) {
-            group = s.group;
-            items.push({ label: `Detected · ${group}`, kind: vscode.QuickPickItemKind.Separator });
-          }
-          const icon = KINDS.find((k) => k.kind === s.model.kind)?.icon ?? "gear";
-          items.push({ label: `$(${icon}) ${s.label}`, description: s.detail, suggestion: s });
-        }
-        setItems([...items, ...blanks]);
-      })
-      .catch((err: Error) =>
-        vscode.window.showWarningMessage(`Project scan failed: ${err.message}`),
-      )
-      .finally(() => (qp.busy = false));
     const picked = await new Promise<AddItem | undefined>((resolve) => {
       qp.onDidAccept(() => {
         const chosen = qp.selectedItems[0];
         // A filter that matches nothing is not "no choice": stay in the list.
-        if (chosen || !qp.value.trim()) resolve(chosen ?? { label: "", blank: "unset" });
+        if (chosen || !qp.value.trim()) resolve(chosen ?? blank);
       });
       qp.onDidHide(() => resolve(undefined));
+      detect(folder, true)
+        .then(({ suggestions }) => {
+          const fresh = suggestions.filter((s) => !taken.includes(s.model.name));
+          // Nothing detected: there is nothing to choose from, go straight to the blank form.
+          if (!fresh.length) return resolve(blank);
+          const items: AddItem[] = [];
+          let group = "";
+          for (const s of fresh) {
+            if (s.group !== group) {
+              group = s.group;
+              items.push({
+                label: `Detected · ${group}`,
+                kind: vscode.QuickPickItemKind.Separator,
+              });
+            }
+            const icon = KINDS.find((k) => k.kind === s.model.kind)?.icon ?? "gear";
+            items.push({ label: `$(${icon}) ${s.label}`, description: s.detail, suggestion: s });
+          }
+          setItems(items);
+        })
+        .catch((err: Error) => {
+          vscode.window.showWarningMessage(`Project scan failed: ${err.message}`);
+          resolve(blank);
+        })
+        .finally(() => (qp.busy = false));
     });
     qp.dispose();
     if (!picked) return;

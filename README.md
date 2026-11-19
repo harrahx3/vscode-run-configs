@@ -22,7 +22,8 @@ side panel and a form, instead of editing `.vscode/launch.json` by hand.
   - **Vite dev server** (`npx vite`, `pnpm exec vite`…) with port, host and `--strictPort`.
     The port can come from a variable, read from the environment or from an env file.
   - **Backend + frontend**: a FastAPI app and a `dev` script started (and stopped) together.
-  - Or a blank form of any kind.
+  - Or press Enter without choosing: a blank form with nothing selected, where you pick the
+    kind. With no suggestion to offer, the blank form opens directly.
 - **The form** covers Python script, Python module, FastAPI, pytest, `package.json` script,
   browser, "start together" (compound) and, for anything else, the raw JSON of the entry.
   Arguments are typed like in a terminal, files and folders have a Browse… button,
