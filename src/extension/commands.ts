@@ -114,17 +114,13 @@ export function registerCommands(
         blank: k.kind,
       })),
     ];
-    // Enter without having moved to an item or typed a filter means "no choice": the form opens
-    // blank, with nothing selected, instead of taking whichever item VS Code highlights first.
-    let moved = false;
+    // No item is highlighted when the list opens (and each time the scan refreshes it), so Enter
+    // without a choice opens a blank form with nothing selected, and what is highlighted is
+    // always what Enter picks. Typing a filter or pressing Down highlights an item as usual.
     const setItems = (items: AddItem[]) => {
       qp.items = items;
-      moved = false;
+      qp.activeItems = [];
     };
-    qp.onDidChangeActive((active) => {
-      const first = qp.items.find((i) => i.kind !== vscode.QuickPickItemKind.Separator);
-      if (active[0] && active[0] !== first) moved = true;
-    });
     setItems(blanks);
     qp.busy = true;
     qp.show();
@@ -148,9 +144,11 @@ export function registerCommands(
       )
       .finally(() => (qp.busy = false));
     const picked = await new Promise<AddItem | undefined>((resolve) => {
-      qp.onDidAccept(() =>
-        resolve(moved || qp.value.trim() ? qp.selectedItems[0] : { label: "", blank: "unset" }),
-      );
+      qp.onDidAccept(() => {
+        const chosen = qp.selectedItems[0];
+        // A filter that matches nothing is not "no choice": stay in the list.
+        if (chosen || !qp.value.trim()) resolve(chosen ?? { label: "", blank: "unset" });
+      });
       qp.onDidHide(() => resolve(undefined));
     });
     qp.dispose();
