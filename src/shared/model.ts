@@ -1,6 +1,7 @@
 // The form model of one run configuration and its conversion to / from a launch.json entry.
 // Pure code: used by the extension host (saving, tree labels) and the webview (live preview).
 import { argsToString, joinArgs, splitArgs } from "./args";
+import { isViteCommand, parseViteCommand, viteCommand } from "./vite";
 
 export type ConfigKind =
   | "python-file"
@@ -134,14 +135,6 @@ export function emptyModel(kind: ConfigKind = "python-file"): FormModel {
 }
 
 const str = (v: unknown, fallback = ""): string => (typeof v === "string" ? v : fallback);
-/** `npx vite …`, `pnpm exec vite …`, `yarn vite …`, `bunx vite …`. */
-const VITE_COMMAND = /^(npx|pnpm exec|yarn|bunx)\s+vite(?:\s+(.*))?$/;
-const VITE_RUNNER: Record<PackageManager, string> = {
-  npm: "npx",
-  pnpm: "pnpm exec",
-  yarn: "yarn",
-  bun: "bunx",
-};
 const NPM_COMMAND = /^(npm|pnpm|yarn|bun)\s+(?:run\s+)?(\S+)(?:\s+--)?(?:\s+(.*))?$/;
 
 /**
@@ -170,7 +163,7 @@ export function kindOf(entry: LaunchEntry, section: Section = "configurations"):
     if (typeof entry.program === "string") return "python-file";
     return "custom";
   }
-  if (type === "node-terminal" && VITE_COMMAND.test(str(entry.command).trim())) return "vite";
+  if (type === "node-terminal" && isViteCommand(str(entry.command))) return "vite";
   if (type === "node-terminal" && NPM_COMMAND.test(str(entry.command).trim())) return "npm-script";
   if (BROWSER_TYPES.includes(type) && entry.request === "launch") return "browser";
   return "custom";
@@ -239,21 +232,7 @@ export function fromLaunch(entry: LaunchEntry, section: Section = "configuration
     m.script = script;
     m.args = rest ?? "";
   } else if (kind === "vite") {
-    const [, runner, rest] = VITE_COMMAND.exec(str(entry.command).trim())!;
-    m.packageManager = (Object.entries(VITE_RUNNER).find(([, r]) => r === runner)?.[0] ??
-      "npm") as PackageManager;
-    const args = splitArgs(rest ?? "");
-    const other: string[] = [];
-    for (let i = 0; i < args.length; i++) {
-      const a = args[i];
-      if (a === "--strictPort") m.strictPort = true;
-      else if (a === "--host" && i + 1 < args.length) m.host = args[++i];
-      else if (a === "--port" && i + 1 < args.length) m.port = args[++i];
-      else if (a.startsWith("--host=")) m.host = a.slice(7);
-      else if (a.startsWith("--port=")) m.port = a.slice(7);
-      else other.push(a);
-    }
-    m.args = joinArgs(other);
+    parseViteCommand(str(entry.command), m);
   } else if (kind === "browser") {
     m.url = str(entry.url);
     m.webRoot = str(entry.webRoot, "${workspaceFolder}");
@@ -303,15 +282,6 @@ function uvicornArgs(m: FormModel): string[] {
   if (m.port.trim()) args.push("--port", m.port.trim());
   if (m.reload) args.push("--reload");
   return [...args, ...splitArgs(m.args)];
-}
-
-export function viteCommand(m: FormModel): string {
-  const parts = [`${VITE_RUNNER[m.packageManager]} vite`];
-  if (m.host.trim()) parts.push("--host", m.host.trim());
-  if (m.port.trim()) parts.push("--port", m.port.trim());
-  if (m.strictPort) parts.push("--strictPort");
-  if (m.args.trim()) parts.push(m.args.trim());
-  return parts.join(" ");
 }
 
 export function npmCommand(m: FormModel): string {
@@ -478,8 +448,14 @@ export function validate(m: FormModel, names: readonly string[]): Record<string,
         errors.args = "Extra uvicorn options cannot be combined with a port variable.";
     }
   }
-  if (m.kind === "vite" && m.port.trim() && !/^\d{2,5}$/.test(m.port.trim()))
-    errors.port = "A port is a number.";
+  if (m.kind === "vite") {
+    if (m.port.trim() && !/^\d{2,5}$/.test(m.port.trim())) errors.port = "A port is a number.";
+    if (m.portEnv.trim()) {
+      if (!/^[A-Za-z_]\w*$/.test(m.portEnv.trim()))
+        errors.portEnv = "A variable name: letters, digits and underscores, e.g. FRONTEND_PORT.";
+      if (!m.port.trim()) errors.port = "Give the port used when the variable is not set.";
+    } else if (m.envFile.trim()) errors.portEnv = "Name the variable to read from the file.";
+  }
   if (m.kind === "npm-script") need("script", "Choose the script to run.");
   if (m.kind === "browser") need("url", "Type the page address, e.g. http://localhost:5173.");
   if (m.kind === "compound" && !m.members.length)

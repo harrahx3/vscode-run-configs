@@ -305,13 +305,25 @@ export function kindFields(ctx: FieldContext): {
             { class: "row two" },
             text(ctx, "port", "Port", {
               placeholder: "from vite.config",
-              help: "Empty = the port of vite.config (e.g. read from your env file there).",
+              help: "Empty = the port of vite.config. With a variable below: the port used when it is not set.",
             }),
             text(ctx, "host", "Host", {
               placeholder: "localhost",
               help: "0.0.0.0 to reach it from other machines.",
             }),
           ),
+          text(ctx, "portEnv", "Port from environment variable (optional)", {
+            mono: true,
+            placeholder: "FRONTEND_PORT",
+            suggestions: ctx.hints.envNames.map((e) => e.name).filter((n) => /PORT/i.test(n)),
+            help: "Name of the variable that holds the port. The environment wins over the file.",
+          }),
+          text(ctx, "envFile", "Environment file to read it from (optional)", {
+            pick: "envFile",
+            mono: true,
+            placeholder: "${workspaceFolder}/.env",
+            help: "Only this one variable is read from the file (bash / zsh terminals).",
+          }),
           check(ctx, "strictPort", "Fail if the port is taken (--strictPort)"),
           select(ctx, "packageManager", "Package manager", [
             ["npm", "npm (npx)"],

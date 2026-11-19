@@ -20,6 +20,7 @@ side panel and a form, instead of editing `.vscode/launch.json` by hand.
   - Web: every `package.json` script with the right package manager (from the lock file), and
     a browser debug configuration on the dev server's address (Vite's `server.port` is read).
   - **Vite dev server** (`npx vite`, `pnpm exec vite`…) with port, host and `--strictPort`.
+    The port can come from a variable, read from the environment or from an env file.
   - **Backend + frontend**: a FastAPI app and a `dev` script started (and stopped) together.
   - Or a blank form of any kind.
 - **The form** covers Python script, Python module, FastAPI, pytest, `package.json` script,

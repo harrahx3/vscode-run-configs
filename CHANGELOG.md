@@ -5,6 +5,9 @@
 - FastAPI: a **Port from environment variable** field. Type the variable's name (e.g.
   `BACKEND_PORT`); the entry then starts uvicorn through debugpy's `code` property and reads
   the port from the environment or from the entry's env file, with the Port field as fallback.
+- Vite: the same **Port from environment variable** field, plus an **Environment file** field.
+  The command reads that one variable out of the file (bash / zsh), after the environment and
+  before the fallback port; the rest of the file is never sourced.
 - New **Vite dev server** kind in "What do you want to run?": port, host, `--strictPort`,
   package manager and folder; the project scan suggests it when `vite` is a dependency.
 

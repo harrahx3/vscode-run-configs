@@ -297,3 +297,60 @@ describe("Vite kind", () => {
     expect(toLaunch(m).entry.command).toBe("npx vite");
   });
 });
+
+describe("Vite port from an environment variable and an env file", () => {
+  const make = (file: string) => {
+    const m = emptyModel("vite");
+    m.name = "Vite";
+    m.cwd = "${workspaceFolder}/frontend";
+    m.portEnv = "FRONTEND_PORT";
+    m.port = "8098";
+    m.envFile = file;
+    m.host = "0.0.0.0";
+    m.strictPort = true;
+    return m;
+  };
+
+  it("reads the variable from the environment only when there is no file", () => {
+    const { entry } = toLaunch(make(""));
+    expect(entry.command).toBe(
+      'vite_port="$FRONTEND_PORT"; [ -n "$vite_port" ] || vite_port=8098; npx vite --host 0.0.0.0 --port "$vite_port" --strictPort',
+    );
+    const back = fromLaunch(entry);
+    expect([back.portEnv, back.port, back.envFile, back.host, back.strictPort]).toEqual([
+      "FRONTEND_PORT",
+      "8098",
+      "",
+      "0.0.0.0",
+      true,
+    ]);
+  });
+
+  it("with a file, reads that one variable out of it and round-trips", () => {
+    const m = make("${workspaceFolder}/.env");
+    const { entry } = toLaunch(m);
+    expect(entry.command).toContain(
+      `vite_port=$(sed -n 's/^FRONTEND_PORT=//p' "\${workspaceFolder}/.env"`,
+    );
+    expect(entry.command).not.toContain("${FRONTEND_PORT");
+    expect(entry.command).toContain('--port "$vite_port"');
+    const back = fromLaunch(entry);
+    expect(back.kind).toBe("vite");
+    expect([back.portEnv, back.port, back.envFile]).toEqual([
+      "FRONTEND_PORT",
+      "8098",
+      "${workspaceFolder}/.env",
+    ]);
+    expect(toLaunch(back, entry).entry).toEqual(entry);
+  });
+
+  it("asks for a fallback port and a variable name", () => {
+    const m = make("");
+    m.port = "";
+    expect(validate(m, [])).toHaveProperty("port");
+    const n = emptyModel("vite");
+    n.name = "V";
+    n.envFile = "x";
+    expect(validate(n, [])).toHaveProperty("portEnv");
+  });
+});
