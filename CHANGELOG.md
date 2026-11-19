@@ -11,6 +11,9 @@
 - The variable-name suggestions now also come from the project's Vite config (`env.X`,
   `process.env.X`) and from an env **template** (`.env.template`, `.env.example`…), with its
   value as the default. A real env file is still never read.
+- Add Configuration…: pressing Enter without moving to an item or typing a filter now opens a
+  blank form with no kind selected (the kind must be chosen before saving), instead of taking
+  the first suggestion.
 - New **Vite dev server** kind in "What do you want to run?": port, host, `--strictPort`,
   package manager and folder; the project scan suggests it when `vite` is a dependency.
 

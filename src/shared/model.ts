@@ -3,7 +3,9 @@
 import { argsToString, joinArgs, splitArgs } from "./args";
 import { isViteCommand, parseViteCommand, viteCommand } from "./vite";
 
+/** `unset`: a new blank form where the kind has not been chosen yet. */
 export type ConfigKind =
+  | "unset"
   | "python-file"
   | "python-module"
   | "fastapi"
@@ -264,6 +266,7 @@ const MANAGED: Record<ConfigKind, string[]> = {
   browser: [...COMMON, "url", "webRoot"],
   compound: ["name", "configurations", "stopAll", "preLaunchTask"],
   custom: [],
+  unset: [],
 };
 
 /**
@@ -314,6 +317,7 @@ export function toLaunch(
   original?: LaunchEntry,
   originalSection?: Section,
 ): BuiltEntry {
+  if (m.kind === "unset") throw new Error("Choose what to run first.");
   if (m.kind === "custom") {
     const parsed = JSON.parse(m.json) as unknown;
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
@@ -431,6 +435,7 @@ export function validate(m: FormModel, names: readonly string[]): Record<string,
   const name = m.name.trim();
   if (!name) errors.name = "Give the configuration a name.";
   else if (names.includes(name)) errors.name = "Another configuration already has this name.";
+  if (m.kind === "unset") errors.kind = "Choose what you want to run.";
   const need = (field: keyof FormModel, message: string) => {
     if (!String(m[field]).trim()) errors[field] = message;
   };

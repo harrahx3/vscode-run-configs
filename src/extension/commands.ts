@@ -114,7 +114,18 @@ export function registerCommands(
         blank: k.kind,
       })),
     ];
-    qp.items = blanks;
+    // Enter without having moved to an item or typed a filter means "no choice": the form opens
+    // blank, with nothing selected, instead of taking whichever item VS Code highlights first.
+    let moved = false;
+    const setItems = (items: AddItem[]) => {
+      qp.items = items;
+      moved = false;
+    };
+    qp.onDidChangeActive((active) => {
+      const first = qp.items.find((i) => i.kind !== vscode.QuickPickItemKind.Separator);
+      if (active[0] && active[0] !== first) moved = true;
+    });
+    setItems(blanks);
     qp.busy = true;
     qp.show();
     detect(folder, true)
@@ -130,14 +141,16 @@ export function registerCommands(
           const icon = KINDS.find((k) => k.kind === s.model.kind)?.icon ?? "gear";
           items.push({ label: `$(${icon}) ${s.label}`, description: s.detail, suggestion: s });
         }
-        qp.items = [...items, ...blanks];
+        setItems([...items, ...blanks]);
       })
       .catch((err: Error) =>
         vscode.window.showWarningMessage(`Project scan failed: ${err.message}`),
       )
       .finally(() => (qp.busy = false));
     const picked = await new Promise<AddItem | undefined>((resolve) => {
-      qp.onDidAccept(() => resolve(qp.selectedItems[0]));
+      qp.onDidAccept(() =>
+        resolve(moved || qp.value.trim() ? qp.selectedItems[0] : { label: "", blank: "unset" }),
+      );
       qp.onDidHide(() => resolve(undefined));
     });
     qp.dispose();

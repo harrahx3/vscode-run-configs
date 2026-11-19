@@ -186,6 +186,8 @@ export function kindFields(ctx: FieldContext): {
     task,
   ];
   switch (m.kind) {
+    case "unset":
+      return { main: [], context: [], advanced: [] };
     case "python-file":
       return {
         main: [

@@ -354,3 +354,14 @@ describe("Vite port from an environment variable and an env file", () => {
     expect(validate(n, [])).toHaveProperty("portEnv");
   });
 });
+
+describe("blank form with no kind chosen", () => {
+  it("cannot be saved until a kind is picked", () => {
+    const m = emptyModel("unset");
+    m.name = "X";
+    expect(validate(m, [])).toHaveProperty("kind");
+    expect(() => toLaunch(m)).toThrow();
+    m.kind = "vite";
+    expect(validate(m, [])).toEqual({});
+  });
+});

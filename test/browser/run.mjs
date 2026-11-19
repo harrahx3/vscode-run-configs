@@ -221,6 +221,23 @@ const PARIS_HINTS = {
 
 console.log("browser tests");
 
+await scenario("a blank form selects no kind until one is chosen", async (p) => {
+  await p.waitForFunction(() => window.__sent.some((m) => m.type === "ready"));
+  await post(p, init(emptyModel("unset")));
+  await post(p, HINTS);
+  await p.locator(".kind").first().waitFor();
+  assert.equal(await p.locator(".kind[aria-checked=true]").count(), 0);
+  await p
+    .locator("[data-action=save]")
+    .first()
+    .click()
+    .catch(() => {});
+  await p.locator(".error", { hasText: "Choose what you want to run" }).waitFor();
+  assert.equal((await sent(p)).filter((m) => m.type === "save").length, 0);
+  await p.locator(".kind", { hasText: "Vite dev server" }).click();
+  await p.locator(".kind[aria-checked=true]", { hasText: "Vite dev server" }).waitFor();
+});
+
 await scenario(
   "new Python script: the name follows the file, Save & Debug sends the model",
   async (p) => {

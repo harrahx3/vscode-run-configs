@@ -131,25 +131,32 @@ function save(then: SaveThen): void {
 }
 
 function kindPicker(s: State): HTMLElement {
+  const error = h("div", { class: "error", role: "alert" });
+  ctx?.errors.set("kind", error);
   return h(
     "div",
-    { class: "kinds", role: "radiogroup", "aria-label": "What do you want to run?" },
-    ...KINDS.map((k) =>
-      h(
-        "button",
-        {
-          type: "button",
-          class: "kind",
-          role: "radio",
-          "aria-checked": String(s.model.kind === k.kind),
-          "data-kind": k.kind,
-          onclick: () => s.model.kind !== k.kind && set("kind", k.kind),
-        },
-        icon(k.icon),
-        h("span", { class: "kind-label" }, k.label),
-        h("span", { class: "kind-hint" }, k.hint),
+    {},
+    h(
+      "div",
+      { class: "kinds", role: "radiogroup", "aria-label": "What do you want to run?" },
+      ...KINDS.map((k) =>
+        h(
+          "button",
+          {
+            type: "button",
+            class: "kind",
+            role: "radio",
+            "aria-checked": String(s.model.kind === k.kind),
+            "data-kind": k.kind,
+            onclick: () => s.model.kind !== k.kind && set("kind", k.kind),
+          },
+          icon(k.icon),
+          h("span", { class: "kind-label" }, k.label),
+          h("span", { class: "kind-hint" }, k.hint),
+        ),
       ),
     ),
+    error,
   );
 }
 
