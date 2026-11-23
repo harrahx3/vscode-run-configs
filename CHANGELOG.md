@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.1.1 — 2026-11-23
 
 - **Right-click on the form's tiles**: edit or delete a template, hide a built-in tile, add a
   new template, show or hide the built-in tiles. The form no longer opens the default
