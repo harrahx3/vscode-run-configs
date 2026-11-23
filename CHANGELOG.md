@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- **Right-click on the form's tiles**: edit or delete a template, hide a built-in tile, add a
+  new template, show or hide the built-in tiles. The form no longer opens the default
+  Cut/Copy/Paste menu outside text fields.
+
 ## 1.1.0 — 2026-11-23
 
 - **Templates**: add your own tiles under "What do you want to run?" for technologies the

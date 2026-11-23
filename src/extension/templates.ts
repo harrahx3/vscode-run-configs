@@ -9,6 +9,7 @@ import {
   parseHiddenKinds,
   parseTemplates,
   type Template,
+  type TileContext,
 } from "../shared/templates";
 
 const section = () => vscode.workspace.getConfiguration("runConfigs");
@@ -17,8 +18,11 @@ const section = () => vscode.workspace.getConfiguration("runConfigs");
 export function readTemplates(): { user: Template[]; workspace: Template[] } {
   const inspected = section().inspect<unknown>("templates");
   return {
-    user: parseTemplates(inspected?.globalValue),
-    workspace: parseTemplates(inspected?.workspaceValue),
+    user: parseTemplates(inspected?.globalValue).map((t) => ({ ...t, scope: "user" as const })),
+    workspace: parseTemplates(inspected?.workspaceValue).map((t) => ({
+      ...t,
+      scope: "workspace" as const,
+    })),
   };
 }
 
@@ -32,8 +36,13 @@ export function hiddenKinds() {
   return parseHiddenKinds(section().get("hiddenKinds"));
 }
 
+/** Stores the user templates, without the `scope` added when reading them. */
 const writeUser = (templates: Template[]) =>
-  section().update("templates", templates, vscode.ConfigurationTarget.Global);
+  section().update(
+    "templates",
+    templates.map(({ scope: _scope, ...t }) => t),
+    vscode.ConfigurationTarget.Global,
+  );
 
 /** Asks for the label, hint and icon of a template, then stores it. Returns false if cancelled. */
 async function promptTemplate(
@@ -114,7 +123,35 @@ async function pickUserTemplate(title: string): Promise<Template | undefined> {
   return picked?.template;
 }
 
-async function hideShowBuiltIns(): Promise<void> {
+/** A new template, from a blank configuration (only the debugger type to fill). */
+export async function addTemplate(): Promise<void> {
+  const made = await promptTemplate({ type: "", request: "launch" });
+  if (made) await writeUser([...readTemplates().user, made]);
+}
+
+export async function editTemplate(t: Template): Promise<void> {
+  const made = await promptTemplate(t.configuration, t, t);
+  if (made) await writeUser(readTemplates().user.map((u) => (u.label === t.label ? made : u)));
+}
+
+export async function deleteTemplate(t: Template): Promise<void> {
+  const ok = await vscode.window.showWarningMessage(
+    `Delete the template "${t.label}"?`,
+    { modal: true, detail: "It is removed from your user settings." },
+    "Delete",
+  );
+  if (ok === "Delete") await writeUser(readTemplates().user.filter((u) => u.label !== t.label));
+}
+
+/** Hides one built-in tile (the JSON editor cannot be hidden). */
+export async function hideKind(kind: ConfigKind): Promise<void> {
+  if (kind === ALWAYS_SHOWN || !KINDS.some((k) => k.kind === kind)) return;
+  const hidden = hiddenKinds();
+  if (hidden.includes(kind)) return;
+  await section().update("hiddenKinds", [...hidden, kind], vscode.ConfigurationTarget.Global);
+}
+
+export async function hideShowBuiltIns(): Promise<void> {
   const hidden = hiddenKinds();
   const picked = await vscode.window.showQuickPick<vscode.QuickPickItem & { builtin: ConfigKind }>(
     KINDS.filter((k) => k.kind !== ALWAYS_SHOWN).map((k) => ({
@@ -148,32 +185,43 @@ export async function manageTemplates(): Promise<void> {
     { title: "Run Configurations: templates", placeHolder: "What do you want to do?" },
   );
   if (!action) return;
-  const user = readTemplates().user;
   switch (action.action) {
-    case "add": {
-      const made = await promptTemplate({ type: "", request: "launch" });
-      if (made) await writeUser([...user, made]);
-      return;
-    }
+    case "add":
+      return addTemplate();
     case "edit": {
       const t = await pickUserTemplate("Edit a template");
-      if (!t) return;
-      const made = await promptTemplate(t.configuration, t, t);
-      if (made) await writeUser(user.map((u) => (u.label === t.label ? made : u)));
+      if (t) await editTemplate(t);
       return;
     }
     case "delete": {
       const t = await pickUserTemplate("Delete a template");
-      if (!t) return;
-      const ok = await vscode.window.showWarningMessage(
-        `Delete the template "${t.label}"?`,
-        { modal: true, detail: "It is removed from your user settings." },
-        "Delete",
-      );
-      if (ok === "Delete") await writeUser(user.filter((u) => u.label !== t.label));
+      if (t) await deleteTemplate(t);
       return;
     }
     case "builtin":
       return hideShowBuiltIns();
   }
 }
+
+/** The user template a right-click on a tile names, if it still exists. */
+function userTemplateOf(ctx?: TileContext): Template | undefined {
+  if (ctx?.templateScope !== "user" || !ctx.templateLabel) return undefined;
+  return readTemplates().user.find((t) => t.label === ctx.templateLabel);
+}
+
+/** The commands of the right-click menu on the form's tiles (`webview/context`). */
+export const tileCommands: Record<string, (ctx?: TileContext) => Promise<void>> = {
+  "runConfigs.tiles.newTemplate": () => addTemplate(),
+  "runConfigs.tiles.editTemplate": async (ctx) => {
+    const t = userTemplateOf(ctx);
+    if (t) await editTemplate(t);
+  },
+  "runConfigs.tiles.deleteTemplate": async (ctx) => {
+    const t = userTemplateOf(ctx);
+    if (t) await deleteTemplate(t);
+  },
+  "runConfigs.tiles.hide": async (ctx) => {
+    if (ctx?.kind) await hideKind(ctx.kind);
+  },
+  "runConfigs.tiles.showHide": () => hideShowBuiltIns(),
+};

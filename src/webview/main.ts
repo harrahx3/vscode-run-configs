@@ -2,7 +2,12 @@
 import type { Hints, HostMessage, InitMessage, SaveThen, WebviewMessage } from "../shared/messages";
 import { programKey, type FireCli } from "../shared/fire";
 import { KINDS, toLaunch, validate, type FormModel } from "../shared/model";
-import { templateEntry, type Template } from "../shared/templates";
+import {
+  builtinTileContext,
+  templateEntry,
+  templateTileContext,
+  type Template,
+} from "../shared/templates";
 import { h, icon, uid } from "./dom";
 import { kindFields, text, type FieldContext } from "./fields";
 
@@ -168,7 +173,13 @@ function kindPicker(s: State): HTMLElement {
     {},
     h(
       "div",
-      { class: "kinds", role: "radiogroup", "aria-label": "What do you want to run?" },
+      {
+        class: "kinds",
+        role: "radiogroup",
+        "aria-label": "What do you want to run?",
+        // Right-click: New Template…, Show or Hide Built-in Tiles… (and per tile, below).
+        "data-vscode-context": JSON.stringify({ tiles: true }),
+      },
       ...KINDS.filter((k) => !s.hiddenKinds.includes(k.kind) || k.kind === s.model.kind).map((k) =>
         h(
           "button",
@@ -178,6 +189,7 @@ function kindPicker(s: State): HTMLElement {
             role: "radio",
             "aria-checked": String(s.model.kind === k.kind && !s.template),
             "data-kind": k.kind,
+            "data-vscode-context": JSON.stringify(builtinTileContext(k.kind)),
             onclick: () => {
               if (s.model.kind === k.kind && !s.template) return;
               s.template = undefined;
@@ -198,6 +210,7 @@ function kindPicker(s: State): HTMLElement {
             role: "radio",
             "aria-checked": String(s.template?.label === t.label && s.model.kind === "custom"),
             "data-template": String(i),
+            "data-vscode-context": JSON.stringify(templateTileContext(t)),
             onclick: () => applyTemplate(t),
           },
           icon(t.icon),

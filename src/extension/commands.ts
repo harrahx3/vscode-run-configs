@@ -15,7 +15,7 @@ import {
   saveEntry,
   type StoredConfig,
 } from "./store";
-import { manageTemplates } from "./templates";
+import { manageTemplates, tileCommands } from "./templates";
 import type { ConfigTree, Node } from "./tree";
 
 type ConfigNode = Extract<Node, { type: "config" }>;
@@ -169,6 +169,7 @@ export function registerCommands(
 
   register("runConfigs.add", add);
   register("runConfigs.manageTemplates", manageTemplates);
+  for (const [id, fn] of Object.entries(tileCommands)) register(id, fn);
   register("runConfigs.refresh", () => tree.refresh());
   register("runConfigs.openLaunchJson", async (node?: Node) => {
     const folder = node?.type === "config" ? node.config.folder : await chooseFolder(node);

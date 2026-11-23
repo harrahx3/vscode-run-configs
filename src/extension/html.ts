@@ -22,7 +22,7 @@ export function webviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri): 
   <link rel="stylesheet" href="${asset("webview.css")}">
   <title>Run configuration</title>
 </head>
-<body>
+<body data-vscode-context='{"preventDefaultContextMenuItems":true}'>
   <main id="app"><p class="muted">Loading…</p></main>
   <script nonce="${nonce}" src="${asset("webview.js")}"></script>
 </body>

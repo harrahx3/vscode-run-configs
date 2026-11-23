@@ -65,6 +65,31 @@ const tests: [string, () => Promise<void>][] = [
     },
   ],
   [
+    "the tile menu hides a built-in tile, never the JSON one",
+    async () => {
+      const { hiddenKinds } = await api();
+      const cfg = vscode.workspace.getConfiguration("runConfigs");
+      try {
+        // The argument is what a right-click on a tile passes (its data-vscode-context).
+        await vscode.commands.executeCommand("runConfigs.tiles.hide", {
+          webviewSection: "builtinTile",
+          kind: "vite",
+          hideable: true,
+        });
+        await vscode.commands.executeCommand("runConfigs.tiles.hide", { kind: "custom" });
+        await vscode.commands.executeCommand("runConfigs.tiles.hide", { kind: "vite" });
+        assert.deepStrictEqual(hiddenKinds(), ["vite"]);
+        // A workspace template is not editable from the menu: nothing happens, no prompt.
+        await vscode.commands.executeCommand("runConfigs.tiles.deleteTemplate", {
+          templateLabel: "Nope",
+          templateScope: "workspace",
+        });
+      } finally {
+        await cfg.update("hiddenKinds", undefined, vscode.ConfigurationTarget.Global);
+      }
+    },
+  ],
+  [
     "the side panel lists the configurations of launch.json",
     async () => {
       assert.ok((await api()).tree, "extension activated");

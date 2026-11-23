@@ -147,6 +147,36 @@
         "title": "Manage Templates…",
         "category": "Run Configurations",
         "icon": "$(library)"
+      },
+      {
+        "command": "runConfigs.tiles.newTemplate",
+        "title": "New Template…",
+        "category": "Run Configurations",
+        "icon": "$(add)"
+      },
+      {
+        "command": "runConfigs.tiles.editTemplate",
+        "title": "Edit Template…",
+        "category": "Run Configurations",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "runConfigs.tiles.deleteTemplate",
+        "title": "Delete Template",
+        "category": "Run Configurations",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "runConfigs.tiles.hide",
+        "title": "Hide This Tile",
+        "category": "Run Configurations",
+        "icon": "$(eye-closed)"
+      },
+      {
+        "command": "runConfigs.tiles.showHide",
+        "title": "Show or Hide Built-in Tiles…",
+        "category": "Run Configurations",
+        "icon": "$(eye)"
       }
     ],
     "menus": {
@@ -266,6 +296,53 @@
         {
           "command": "runConfigs.reveal",
           "when": "false"
+        },
+        {
+          "command": "runConfigs.tiles.newTemplate",
+          "when": "false"
+        },
+        {
+          "command": "runConfigs.tiles.editTemplate",
+          "when": "false"
+        },
+        {
+          "command": "runConfigs.tiles.deleteTemplate",
+          "when": "false"
+        },
+        {
+          "command": "runConfigs.tiles.hide",
+          "when": "false"
+        },
+        {
+          "command": "runConfigs.tiles.showHide",
+          "when": "false"
+        }
+      ],
+      "webview/context": [
+        {
+          "command": "runConfigs.tiles.editTemplate",
+          "when": "webviewId == runConfigs.editor && webviewSection == templateTile && templateScope == user",
+          "group": "1_template@1"
+        },
+        {
+          "command": "runConfigs.tiles.deleteTemplate",
+          "when": "webviewId == runConfigs.editor && webviewSection == templateTile && templateScope == user",
+          "group": "1_template@2"
+        },
+        {
+          "command": "runConfigs.tiles.hide",
+          "when": "webviewId == runConfigs.editor && webviewSection == builtinTile && hideable",
+          "group": "1_template@3"
+        },
+        {
+          "command": "runConfigs.tiles.newTemplate",
+          "when": "webviewId == runConfigs.editor && tiles",
+          "group": "2_manage@1"
+        },
+        {
+          "command": "runConfigs.tiles.showHide",
+          "when": "webviewId == runConfigs.editor && tiles",
+          "group": "2_manage@2"
         }
       ]
     },

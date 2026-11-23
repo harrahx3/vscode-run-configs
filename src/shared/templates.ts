@@ -10,6 +10,35 @@ export interface Template {
   icon: string;
   /** The launch.json entry the form opens with (its `name` is chosen in the form). */
   configuration: LaunchEntry;
+  /** Where it is stored: user templates can be edited from the form, workspace ones cannot. */
+  scope?: "user" | "workspace";
+}
+
+/** What a right-click on the form's tiles passes to the tile commands (`data-vscode-context`). */
+export interface TileContext {
+  /** On every tile and on the grid around them. */
+  tiles?: boolean;
+  webviewSection?: "builtinTile" | "templateTile";
+  /** Built-in tile: its kind; `hideable` is false for the JSON editor. */
+  kind?: ConfigKind;
+  hideable?: boolean;
+  /** Template tile: its label and where it is stored. */
+  templateLabel?: string;
+  templateScope?: "user" | "workspace";
+}
+
+/** The right-click context of a built-in tile. */
+export function builtinTileContext(kind: ConfigKind): TileContext {
+  return { webviewSection: "builtinTile", kind, hideable: kind !== ALWAYS_SHOWN };
+}
+
+/** The right-click context of a template tile. */
+export function templateTileContext(t: Template): TileContext {
+  return {
+    webviewSection: "templateTile",
+    templateLabel: t.label,
+    templateScope: t.scope ?? "user",
+  };
 }
 
 export const DEFAULT_TEMPLATE_ICON = "rocket";

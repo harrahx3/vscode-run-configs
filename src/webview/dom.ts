@@ -17,6 +17,12 @@ export function h<K extends keyof HTMLElementTagNameMap>(
     else if (key === "checked" && el instanceof HTMLInputElement) el.checked = Boolean(value);
     else el.setAttribute(key, value === true ? "" : String(value));
   }
+  // The page hides the webview's default Cut/Copy/Paste menu; text fields keep it.
+  if ((tag === "input" || tag === "textarea") && !el.hasAttribute("data-vscode-context"))
+    el.setAttribute(
+      "data-vscode-context",
+      JSON.stringify({ preventDefaultContextMenuItems: false }),
+    );
   for (const child of children) if (child) el.append(child);
   return el;
 }

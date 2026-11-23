@@ -508,6 +508,21 @@ await scenario(
     assert.equal(await field(p, "name").inputValue(), "Go");
     assert.match(await preview(p), /"type": "go"/);
     assert.match(await preview(p), /"mode": "debug"/);
+    // Right-click: tiles carry their menu context; text fields keep Cut/Copy/Paste.
+    const ctx = (sel) =>
+      p
+        .locator(sel)
+        .first()
+        .evaluate((el) => JSON.parse(el.dataset.vscodeContext ?? "null"));
+    assert.deepEqual(await ctx("[data-template='0']"), {
+      webviewSection: "templateTile",
+      templateLabel: "Go",
+      templateScope: "user",
+    });
+    assert.equal((await ctx("[data-kind=custom]")).hideable, false);
+    assert.equal((await ctx("[data-kind=python-file]")).hideable, true);
+    assert.deepEqual(await ctx(".kinds"), { tiles: true });
+    assert.equal((await ctx("input")).preventDefaultContextMenuItems, false);
     await p.locator("[data-action=template]").click();
     assert.equal((await sent(p)).filter((m) => m.type === "saveTemplate").length, 1);
     await post(p, { type: "templates", templates: [], hiddenKinds: [] });
