@@ -365,6 +365,7 @@
     "test": "vitest run",
     "test:browser": "npm run build && node test/browser/run.mjs",
     "test:vscode": "npm run build && tsc -p test/vscode && node out/test/vscode/runTest.js",
+    "test:vscode:multiroot": "npm run build && tsc -p test/vscode && node out/test/vscode/runMultiRoot.js",
     "package": "npm run notices && npm run build -- --production && vsce package --no-dependencies",
     "notices": "node scripts/notices.mjs"
   },
