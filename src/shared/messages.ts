@@ -1,6 +1,7 @@
 // Messages between the extension host and the configuration form (webview).
 import type { FireCli } from "./fire";
-import type { FormModel, LaunchEntry, Section } from "./model";
+import type { ConfigKind, FormModel, LaunchEntry, Section } from "./model";
+import type { Template } from "./templates";
 
 /** An environment variable the project reads, with its literal default if any. */
 export interface EnvName {
@@ -36,12 +37,16 @@ export interface InitMessage {
   /** Configurations a compound may include (the folder's non-compound ones). */
   memberChoices: string[];
   isNew: boolean;
+  templates: Template[];
+  hiddenKinds: ConfigKind[];
 }
 
 export type HostMessage =
   | InitMessage
   | { type: "hints"; hints: Hints; tasks: string[] }
   | { type: "picked"; field: PickField; value: string }
+  | { type: "templates"; templates: Template[]; hiddenKinds: ConfigKind[] }
+  | { type: "templateSaved" }
   | { type: "error"; message: string }
   | { type: "saved"; model: FormModel; original: LaunchEntry; originalSection: Section };
 
@@ -49,5 +54,6 @@ export type WebviewMessage =
   | { type: "ready" }
   | { type: "pick"; field: PickField }
   | { type: "save"; model: FormModel; then: SaveThen }
+  | { type: "saveTemplate"; model: FormModel }
   | { type: "openJson" }
   | { type: "close" };

@@ -141,6 +141,12 @@
         "command": "runConfigs.reveal",
         "title": "Show in launch.json",
         "category": "Run Configurations"
+      },
+      {
+        "command": "runConfigs.manageTemplates",
+        "title": "Manage Templates…",
+        "category": "Run Configurations",
+        "icon": "$(library)"
       }
     ],
     "menus": {
@@ -159,6 +165,11 @@
           "command": "runConfigs.refresh",
           "when": "view == runConfigs.list",
           "group": "navigation@3"
+        },
+        {
+          "command": "runConfigs.manageTemplates",
+          "when": "view == runConfigs.list",
+          "group": "overflow@1"
         }
       ],
       "view/item/context": [
@@ -278,6 +289,69 @@
           "type": "boolean",
           "default": true,
           "description": "Show a status-bar button that starts the last configuration again."
+        },
+        "runConfigs.templates": {
+          "type": "array",
+          "default": [],
+          "markdownDescription": "Extra tiles under “What do you want to run?” in the configuration form, for technologies the built-in tiles do not cover. Manage them with **Run Configurations: Manage Templates…** or **Save as Template…** in the form.",
+          "items": {
+            "type": "object",
+            "required": [
+              "label",
+              "configuration"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string",
+                "description": "Name shown on the tile."
+              },
+              "hint": {
+                "type": "string",
+                "description": "Short description under the name."
+              },
+              "icon": {
+                "type": "string",
+                "default": "rocket",
+                "description": "A codicon name, like rocket or flame."
+              },
+              "configuration": {
+                "type": "object",
+                "description": "The launch.json entry the form opens with; its name is chosen in the form.",
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "request": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "runConfigs.hiddenKinds": {
+          "type": "array",
+          "default": [],
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "python-file",
+              "python-module",
+              "fastapi",
+              "pytest",
+              "npm-script",
+              "vite",
+              "browser",
+              "compound"
+            ]
+          },
+          "description": "Built-in tiles to hide in the configuration form. The “Other (JSON)” tile is always shown."
         }
       }
     }

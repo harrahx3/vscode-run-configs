@@ -37,6 +37,34 @@ const itemNamed = async (name: string) => (await treeItems()).find((i) => i.item
 
 const tests: [string, () => Promise<void>][] = [
   [
+    "user templates and hidden tiles come from the settings, skipping malformed ones",
+    async () => {
+      const { allTemplates, hiddenKinds } = await api();
+      const cfg = vscode.workspace.getConfiguration("runConfigs");
+      const user = vscode.ConfigurationTarget.Global;
+      try {
+        await cfg.update(
+          "templates",
+          [
+            { label: "Go", hint: "dlv", configuration: { type: "go", request: "launch" } },
+            { label: "Broken" },
+          ],
+          user,
+        );
+        await cfg.update("hiddenKinds", ["vite", "custom"], user);
+        assert.deepStrictEqual(
+          allTemplates().map((t: any) => t.label),
+          ["Go"],
+        );
+        assert.deepStrictEqual(hiddenKinds(), ["vite"]);
+      } finally {
+        await cfg.update("templates", undefined, user);
+        await cfg.update("hiddenKinds", undefined, user);
+      }
+      assert.deepStrictEqual(allTemplates(), []);
+    },
+  ],
+  [
     "the side panel lists the configurations of launch.json",
     async () => {
       assert.ok((await api()).tree, "extension activated");

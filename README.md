@@ -24,6 +24,12 @@ side panel and a form, instead of editing `.vscode/launch.json` by hand.
   - **Backend + frontend**: a FastAPI app and a `dev` script started (and stopped) together.
   - Or press Enter without choosing: a blank form with nothing selected, where you pick the
     kind. With no suggestion to offer, the blank form opens directly.
+- **Your own templates** for other technologies (Go, Rust, Java…): in the form, fill in the
+  **Other (JSON)** tile (or any tile) and click **Save as Template…**; it becomes a tile under
+  "What do you want to run?" that opens with that entry. **Run Configurations: Manage
+  Templates…** (the `…` menu of the side panel) adds, edits and deletes templates and hides
+  built-in tiles. They are stored in the `runConfigs.templates` user setting (a workspace
+  setting of the same name is shown too, to share templates with a team).
 - **The form** covers Python script, Python module, FastAPI, pytest, `package.json` script,
   browser, "start together" (compound) and, for anything else, the raw JSON of the entry.
   Arguments are typed like in a terminal, files and folders have a Browse… button,
@@ -55,10 +61,12 @@ Not covered (yet): configurations stored in a `.code-workspace` file or in the u
 
 ## Settings
 
-| Setting                    | Default | Meaning                                                             |
-| -------------------------- | ------- | ------------------------------------------------------------------- |
-| `runConfigs.defaultAction` | `debug` | What Enter does in _Run or Debug…_: `debug` or `run` (no debugger). |
-| `runConfigs.showStatusBar` | `true`  | Show the "start the last configuration again" status-bar button.    |
+| Setting                    | Default | Meaning                                                               |
+| -------------------------- | ------- | --------------------------------------------------------------------- |
+| `runConfigs.defaultAction` | `debug` | What Enter does in _Run or Debug…_: `debug` or `run` (no debugger).   |
+| `runConfigs.showStatusBar` | `true`  | Show the "start the last configuration again" status-bar button.      |
+| `runConfigs.templates`     | `[]`    | Your own tiles in the form: `label`, `hint`, `icon`, `configuration`. |
+| `runConfigs.hiddenKinds`   | `[]`    | Built-in tiles to hide in the form.                                   |
 
 ## Install
 

@@ -3,6 +3,7 @@ import { createStatusBar, registerCommands, saveModel } from "./commands";
 import { detect } from "./detect";
 import { EditorPanel } from "./editorPanel";
 import { Runner } from "./runner";
+import { allTemplates, hiddenKinds } from "./templates";
 import { ConfigTree } from "./tree";
 
 export function activate(context: vscode.ExtensionContext) {
@@ -15,7 +16,15 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(runner, tree, view, createStatusBar(runner));
   registerCommands(context, runner, tree);
   // Returned for the integration tests.
-  return { tree, runner, detect, saveModel, panels: () => EditorPanel.all() };
+  return {
+    tree,
+    runner,
+    detect,
+    saveModel,
+    allTemplates,
+    hiddenKinds,
+    panels: () => EditorPanel.all(),
+  };
 }
 
 export function deactivate(): void {}

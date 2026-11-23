@@ -13,6 +13,7 @@ import { detect } from "./detect";
 import { webviewHtml } from "./html";
 import type { Runner } from "./runner";
 import { readFolder, revealEntry, saveEntry } from "./store";
+import { allTemplates, hiddenKinds, saveAsTemplate } from "./templates";
 
 export interface EditRequest {
   folder: vscode.WorkspaceFolder;
@@ -82,7 +83,17 @@ export class EditorPanel {
     this.panel.iconPath = vscode.Uri.joinPath(context.extensionUri, "media", "icon.svg");
     this.panel.webview.html = webviewHtml(this.panel.webview, context.extensionUri);
     this.rekey();
-    this.panel.onDidDispose(() => this.key && EditorPanel.open.delete(this.key));
+    const settings = vscode.workspace.onDidChangeConfiguration((e) => {
+      if (
+        e.affectsConfiguration("runConfigs.templates") ||
+        e.affectsConfiguration("runConfigs.hiddenKinds")
+      )
+        this.post({ type: "templates", templates: allTemplates(), hiddenKinds: hiddenKinds() });
+    });
+    this.panel.onDidDispose(() => {
+      settings.dispose();
+      if (this.key) EditorPanel.open.delete(this.key);
+    });
     this.panel.webview.onDidReceiveMessage((m: WebviewMessage) =>
       this.onMessage(m).catch((err: Error) => this.post({ type: "error", message: err.message })),
     );
@@ -115,6 +126,8 @@ export class EditorPanel {
         ...(this.request.alsoCreate ?? []).map((m) => m.name),
       ].filter((n, i, all) => all.indexOf(n) === i),
       isNew: !original,
+      templates: allTemplates(),
+      hiddenKinds: hiddenKinds(),
     });
     const [detection, tasks] = await Promise.all([
       detect(folder).catch(() => undefined),
@@ -131,6 +144,9 @@ export class EditorPanel {
         return this.pick(m.field);
       case "save":
         return this.save(m.model, m.then);
+      case "saveTemplate":
+        if (await saveAsTemplate(m.model)) this.post({ type: "templateSaved" });
+        return;
       case "openJson":
         if (this.request.original)
           await revealEntry({

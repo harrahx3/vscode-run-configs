@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **Templates**: add your own tiles under "What do you want to run?" for technologies the
+  built-in ones do not cover. **Save as Template…** in the form keeps the current
+  configuration as a tile; **Run Configurations: Manage Templates…** adds, edits and deletes
+  templates and shows or hides the built-in tiles. Stored in the `runConfigs.templates` and
+  `runConfigs.hiddenKinds` user settings.
 - FastAPI: a **Port from environment variable** field. Type the variable's name (e.g.
   `BACKEND_PORT`); the entry then starts uvicorn through debugpy's `code` property and reads
   the port from the environment or from the entry's env file, with the Port field as fallback.

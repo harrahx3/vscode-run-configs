@@ -2,6 +2,7 @@
 import type { Hints, HostMessage, InitMessage, SaveThen, WebviewMessage } from "../shared/messages";
 import { programKey, type FireCli } from "../shared/fire";
 import { KINDS, toLaunch, validate, type FormModel } from "../shared/model";
+import { templateEntry, type Template } from "../shared/templates";
 import { h, icon, uid } from "./dom";
 import { kindFields, text, type FieldContext } from "./fields";
 
@@ -18,6 +19,8 @@ interface State extends Omit<InitMessage, "type"> {
   nameTouched: boolean;
   saving: boolean;
   advancedOpen: boolean;
+  /** The template the form was filled from, shown as the selected tile. */
+  template?: Template;
 }
 
 const NO_HINTS: Hints = {
@@ -115,6 +118,18 @@ function set<K extends keyof FormModel>(field: K, value: FormModel[K]): void {
   updatePreview();
 }
 
+function saveTemplate(): void {
+  if (!state) return;
+  state.tried = true;
+  showErrors();
+  const errors = errorsOf(state);
+  if (Object.keys(errors).length) {
+    setStatus("Fix the highlighted fields first.", "error");
+    return;
+  }
+  send({ type: "saveTemplate", model: state.model });
+}
+
 function save(then: SaveThen): void {
   if (!state || state.saving) return;
   state.tried = true;
@@ -130,6 +145,21 @@ function save(then: SaveThen): void {
   send({ type: "save", model: state.model, then });
 }
 
+/** A template tile: the JSON editor opens with the template's entry. */
+function applyTemplate(t: Template): void {
+  if (!state) return;
+  state.template = t;
+  state.model.json = JSON.stringify(templateEntry(t), null, 2);
+  set("kind", "custom");
+  // The name follows the fields until typed; for a template it starts as the template's label.
+  if (state.isNew && !state.nameTouched) {
+    state.model.name = t.label;
+    const nameInput = ctx?.inputs.get("name");
+    if (nameInput) nameInput.value = t.label;
+    updatePreview();
+  }
+}
+
 function kindPicker(s: State): HTMLElement {
   const error = h("div", { class: "error", role: "alert" });
   ctx?.errors.set("kind", error);
@@ -139,20 +169,40 @@ function kindPicker(s: State): HTMLElement {
     h(
       "div",
       { class: "kinds", role: "radiogroup", "aria-label": "What do you want to run?" },
-      ...KINDS.map((k) =>
+      ...KINDS.filter((k) => !s.hiddenKinds.includes(k.kind) || k.kind === s.model.kind).map((k) =>
         h(
           "button",
           {
             type: "button",
             class: "kind",
             role: "radio",
-            "aria-checked": String(s.model.kind === k.kind),
+            "aria-checked": String(s.model.kind === k.kind && !s.template),
             "data-kind": k.kind,
-            onclick: () => s.model.kind !== k.kind && set("kind", k.kind),
+            onclick: () => {
+              if (s.model.kind === k.kind && !s.template) return;
+              s.template = undefined;
+              set("kind", k.kind);
+            },
           },
           icon(k.icon),
           h("span", { class: "kind-label" }, k.label),
           h("span", { class: "kind-hint" }, k.hint),
+        ),
+      ),
+      ...s.templates.map((t, i) =>
+        h(
+          "button",
+          {
+            type: "button",
+            class: "kind",
+            role: "radio",
+            "aria-checked": String(s.template?.label === t.label && s.model.kind === "custom"),
+            "data-template": String(i),
+            onclick: () => applyTemplate(t),
+          },
+          icon(t.icon),
+          h("span", { class: "kind-label" }, t.label),
+          h("span", { class: "kind-hint" }, t.hint),
         ),
       ),
     ),
@@ -234,6 +284,18 @@ function render(): void {
       h("span", { id: "status", role: "status" }),
       h(
         "button",
+        {
+          type: "button",
+          class: "secondary",
+          "data-action": "template",
+          title: "Keep this configuration as a tile under “What do you want to run?”",
+          onclick: saveTemplate,
+        },
+        icon("save-as"),
+        " Save as Template…",
+      ),
+      h(
+        "button",
         { type: "button", class: "secondary", onclick: () => send({ type: "close" }) },
         "Close",
       ),
@@ -306,6 +368,15 @@ window.addEventListener("message", (event: MessageEvent<HostMessage>) => {
       state.tasks = m.tasks;
       // Re-render keeps the model; only the suggestion lists change.
       render();
+      break;
+    case "templates":
+      if (!state) return;
+      state.templates = m.templates;
+      state.hiddenKinds = m.hiddenKinds;
+      render();
+      break;
+    case "templateSaved":
+      setStatus("Template saved ✓", "ok");
       break;
     case "picked":
       if (!state) return;

@@ -147,6 +147,8 @@ const init = (model, extra = {}) => ({
   otherNames: ["api"],
   memberChoices: ["api", "pnpm dev (web)"],
   isNew: true,
+  templates: [],
+  hiddenKinds: [],
   ...extra,
 });
 const HINTS = {
@@ -479,6 +481,38 @@ await scenario(
     await field(p, "program").fill("${workspaceFolder}/other.py");
     assert.equal(await p.locator("fieldset.fire").count(), 0);
     assert.equal(await field(p, "args").inputValue(), "demix", "arguments kept as typed");
+  },
+);
+
+await scenario(
+  "template tiles open the JSON editor with their entry; built-in tiles can be hidden",
+  async (p) => {
+    await p.waitForFunction(() => window.__sent.some((m) => m.type === "ready"));
+    const go = {
+      label: "Go",
+      hint: "dlv debug",
+      icon: "rocket",
+      configuration: {
+        type: "go",
+        request: "launch",
+        mode: "debug",
+        program: "${workspaceFolder}",
+      },
+    };
+    await post(p, init(emptyModel("unset"), { templates: [go], hiddenKinds: ["vite", "browser"] }));
+    await p.locator(".kind").first().waitFor();
+    assert.equal(await p.locator("[data-kind=vite]").count(), 0, "hidden tile");
+    assert.equal(await p.locator("[data-kind=custom]").count(), 1, "JSON tile stays");
+    await p.locator("[data-template='0']").click();
+    await p.locator("[data-template='0'][aria-checked=true]").waitFor();
+    assert.equal(await field(p, "name").inputValue(), "Go");
+    assert.match(await preview(p), /"type": "go"/);
+    assert.match(await preview(p), /"mode": "debug"/);
+    await p.locator("[data-action=template]").click();
+    assert.equal((await sent(p)).filter((m) => m.type === "saveTemplate").length, 1);
+    await post(p, { type: "templates", templates: [], hiddenKinds: [] });
+    await p.locator("[data-kind=vite]").waitFor();
+    assert.equal(await p.locator("[data-template]").count(), 0, "template removed live");
   },
 );
 
