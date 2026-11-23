@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.1.0 — 2026-11-23
 
 - **Templates**: add your own tiles under "What do you want to run?" for technologies the
   built-in ones do not cover. **Save as Template…** in the form keeps the current
